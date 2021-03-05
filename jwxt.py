@@ -60,7 +60,7 @@ def main():
 
         def enroll():
             nonlocal year, semester, course, typ, rank, wish, weight
-            return j.choose(year, semester, course, typ, rank, wish=wish, weight=weight)
+            return j.choose(year, semester, course, typ, rank, wish=wish, weight=weight, verbose=True)
 
         def drop():
             nonlocal year, semester, course, typ, rank, wish, weight
@@ -84,7 +84,7 @@ def main():
                     print(f'{count}: Enrolling {course} failed')
                     time.sleep(args.time)
                 print(f'Successfully enrolled {course}')
-    except: pass
+    except: raise
 
 if __name__ == '__main__':
     main()

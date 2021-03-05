@@ -96,6 +96,7 @@ class CASTGC:
         self.execution = execution
         self.login_url = login_url
         self.headers = headers
+        self.data = data
 
 
 class login:
@@ -106,8 +107,10 @@ class login:
     def refresh(self, url):
         token = self.token
         token.refresh()
+        url = token.login_url + f"?TARGET={url_escape(url)}"
         res = requests.post(
-            token.login_url + f"?TARGET={url_escape(url)}",
+            url,
+            data=token.data,
             cookies={'CASTGC': token.token},
             headers={
                 **token.headers,
@@ -166,7 +169,7 @@ class bykc(login):
     @property
     def weburl(self):
         if self.token and self.token.type is not None:
-            return f'http://bykc.e{self.token.type}.buaa.edu.cn'
+            return f'https://bykc.e{self.token.type}.buaa.edu.cn'
         return 'http://bykc.buaa.edu.cn'
 
     @property
@@ -255,7 +258,7 @@ class bykc(login):
         res = self.api('choseCourse', {'courseId': id})
         return res is not None
 
-    def leave(self, id):
+    def drop(self, id):
         res = self.api('delChosenCourse', {'id': id})
         return res is not None
 
@@ -278,9 +281,7 @@ class jwxt(login):
 
     @property
     def loginurl(self):
-        if self.token and self.token.type is not None:
-            return f'https://jwxt-7001.e{self.token.type}.buaa.edu.cn/{self.path_id}/welcome?falg=1'
-        return f'http://jwxt.buaa.edu.cn:7001/{self.path_id}/welcome?falg=1'
+        return f'{self.weburl}/{self.path_id}/welcome?falg=1'
 
     @property
     def path_id(self):
@@ -294,7 +295,7 @@ class jwxt(login):
     def refresh(self, url=None):
         super().refresh(self.loginurl)
 
-    def choose(self, year, season, course_id: str, course_type='ZY', tail='001', *, external=False, wish=None, weight=None):
+    def choose(self, year, season, course_id: str, course_type='ZY', tail='001', *, external=False, wish=None, weight=None, verbose=False):
         if len(course_id) < 9 or len(course_id) > 10:
             raise (Exception)
         course_id = course_id.upper()
@@ -339,23 +340,30 @@ class jwxt(login):
             data['zy'] = str(wish)
         if weight is not None:
             data['qz'] = str(min(max(weight, 0), 100))
-        form = self.post(f'{self.weburl}/{self.path_id}/xslbxk/queryXsxkList', data=payload,
-                         headers=headers).content.decode('utf8')
 
-        places_re = f'<input id="xkyq_{cid}" type="hidden" value=""/>\\s*([0-9]+)/([0-9]+)[^0-9]+?([0-9]+)/([0-9]+)'
-        places_re = re.compile(places_re)
+        choice_token = None
+        while choice_token is None:
+            form = self.post(f'{self.weburl}/{self.path_id}/xslbxk/queryXsxkList', data=payload,
+                             headers=headers).content.decode('utf8')
 
-        places = re.search(places_re, form)
-        if places is None:
-            return True
-        if external:
-            rest = int(places.group(4)) - int(places.group(3))
-        else:
-            rest = int(places.group(2)) - int(places.group(1))
-        if rest <= 0:
-            return False
+            places_re = f'<input id="xkyq_{cid}" type="hidden" value=""/>\\s*([0-9]+)/([0-9]+)[^0-9]+?([0-9]+)/([0-9]+)'
+            places_re = re.compile(places_re)
 
-        choice_token = re.search(self.__token_re, form).group(1)
+            places = re.search(places_re, form)
+            if places is None:
+                return True
+            if external:
+                rest = int(places.group(4)) - int(places.group(3))
+            else:
+                rest = int(places.group(2)) - int(places.group(1))
+            if rest <= 0:
+                return False
+
+            choice_token = re.search(self.__token_re, form)
+            if choice_token is not None:
+                choice_token = choice_token.group(1)
+            elif verbose:
+                print('Failed to get access token. Retrying.')
         data['token'] = choice_token
         data['rwh'] = cid
         payload1 = '&'.join(map(lambda x: f"{url_escape(x[0])}={url_escape(x[1])}", data.items()))
@@ -365,7 +373,7 @@ class jwxt(login):
                          headers=headers).content.decode('utf8')
         return re.search(places_re, form) is None
 
-    def leave(self, year, season, course_id: str, course_type='ZY', tail='001'):
+    def drop(self, year, season, course_id: str, course_type='ZY', tail='001'):
         if len(course_id) < 9 or len(course_id) > 10:
             raise (Exception)
         course_id = course_id.upper()
