@@ -61,6 +61,12 @@ If you only want to enroll in a limited number of courses, add `-n` to the comma
 python bykc.py username password -lt 1 -n 3
 ```
 
+`bykc.py` can offer a mail reminder service at the time one course is successfully enrolled in. Using `-m` to set the mail address and password of the account. To specify SMTP server and the message receiver, use `-S server` and `-r receiver@xxx.yyy` respectively. If `-r` is not passed, the default receiver is the message sender itself.
+
+```sh
+python bykc.py username password -lt 1 -n 3 -m demo@gmail.com demopassword
+```
+
 ### JWXT
 
 `jwxt.py` is the Course Grab tool for educational administration system (aka. JWXT). 
@@ -80,7 +86,7 @@ python jwxt.py username password course [rank]
 `-d` switches the execute pattern to removing selected course from your timetable.
 
 ```sh
-python bykc.py username password course -d
+python jwxt.py username password course -d
 ```
 
 To further locate the target course, `-y` assigns the year when the course is available, and `-s` indicates semester of the course, where 1 refers to the autumn semester, 2 the spring semester and 3 the summer semester.
@@ -88,12 +94,18 @@ To further locate the target course, `-y` assigns the year when the course is av
 By default, `-y` and `-s` are assigned with current year and semester respectively.
 
 ```sh
-python bykc.py username password course -y 2000 -s 1
+python jwxt.py username password course -y 2000 -s 1
 ```
 
 Like `bykc.py`, `jwxt.py` provides identical way to continuously attempt to enroll a specific course.
 
 ```sh
-python bykc.py username password course -t 1
+python jwxt.py username password course -t 1
+```
+
+The mail reminder service is identical to `bykc.py`.
+
+```sh
+python jwxt.py username password course -t 1 -m demo@gmail.com demopassword
 ```
 
