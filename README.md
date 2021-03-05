@@ -5,6 +5,7 @@
 This tool set has following requirements.
 
 ```
+python>=3.8
 requests
 json
 re
