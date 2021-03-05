@@ -5,14 +5,15 @@ import json
 import time
 import datetime
 
+import smtp
+
+PRODUCT_NAME = 'BUAA Course Grab'
 
 def date(s):
     return datetime.datetime(*time.strptime(s, "%Y-%m-%d %H:%M:%S")[:6])
 
-
 def date2str(d):
     return d.strftime("%Y-%m-%d %H:%M:%S")
-
 
 def url_escape(url):
     ESCAPE = [
@@ -43,6 +44,8 @@ def url_escape(url):
 
 def params(url):
     parsed = urllib3.util.parse_url(url).query
+    if parsed is None:
+        return {}
     res = {}
     for s in parsed.split('&'):
         s = s.split('=')
@@ -179,7 +182,10 @@ class bykc(login):
     def __init__(self, *args, **kwargs):
         self.token = CASTGC(*args, **kwargs)
         super().__init__(self.loginurl, self.token)
-        self.bykc_token = params(self.url)['token']
+        self.bykc_token = params(self.url)
+        while self.bykc_token is None:
+            self.refresh()
+        self.bykc_token = self.bykc_token.get('token', None)
 
     def refresh(self, url=None):
         super().refresh(self.loginurl)
@@ -256,11 +262,13 @@ class bykc(login):
 
     def enroll(self, id):
         res = self.api('choseCourse', {'courseId': id})
-        return res is not None
+        if res is None: return False
+        return id in self.chosen
 
     def drop(self, id):
         res = self.api('delChosenCourse', {'id': id})
-        return res is not None
+        if res is None: return False
+        return id not in self.chosen
 
 
 class jwxt(login):
@@ -432,3 +440,8 @@ class jwxt(login):
         form = self.post(f'{self.weburl}/{self.path_id}/xslbxk/queryYxkc', data=payload,
                          headers=headers).content.decode('utf8')
         return form.find(f'id="{cid}"') >= 0
+
+def remind(course_detail, sender, password, receiver=None, server=None, title='Reminder'):
+    with smtp.login_mail(sender, password, server=server) as s:
+        smtp.mail(s, smtp.mime_from_file(title, 'src/reminder.html', replace={
+            'course_detail': course_detail, 'product_name': PRODUCT_NAME}), receiver=receiver)

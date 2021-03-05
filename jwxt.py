@@ -1,4 +1,5 @@
 from buaa import jwxt
+import buaa
 import argparse
 import time
 import re
@@ -9,17 +10,33 @@ parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='help', help='To show help.')
 parser.add_argument('username', type=str, help='The unified identity authentication account.')
 parser.add_argument('password', type=str, help='Password of the account.')
-parser.add_argument('course', type=str, help='The ID of courses to enroll.')
+parser.add_argument('course', type=str, help='The ID of courses to enroll in.')
 parser.add_argument('rank', nargs='?', type=str, help='The rank indicates the n-th of courses with the same ID.')
-parser.add_argument('-y', '--year', default=None, type=int, help='The current year. The academic year will be automatically calculated according to year and semester.')
-parser.add_argument('-s', '--semester', default=None, type=int, help='The semester. Its value will be restricted to 1-3.')
-parser.add_argument('-T', '--type', default=None, type=str, help='The course type, which is inferred from course ID if not provided. JC for fundamental courses, TS for general courses, and ZY for professional courses.')
+parser.add_argument('-y', '--year', default=None, type=int, help='The current year. The academic year will be '
+                                                                 'automatically calculated according to year and '
+                                                                 'semester.')
+parser.add_argument('-s', '--semester', default=None, type=int, help='The semester. Its value will be restricted '
+                                                                     'to 1-3.')
+parser.add_argument('-T', '--type', default=None, type=str, help='The course type, which is inferred from course ID if '
+                                                                 'not provided. JC for fundamental courses, TS for '
+                                                                 'general courses, and ZY for professional courses.')
 #parser.add_argument('-V', '--vpn', default=None, type=str, help='The index of VPN used.')
 parser.add_argument('-d', '--drop', action='store_true', help='Whether to leave the course.')
 parser.add_argument('-t', '--time', default=None, type=float, help='The interval between tries of enrolling. '
-                                                                 'When this option is set, the script will continue trying until target is enrolled.')
-parser.add_argument('-w', '--wish', default=1, type=int, help='The wish ranking of some course having identical ID with an amount of courses.')
-parser.add_argument('-W', '--weight', default=100, type=int, help='The weight of sport course, which will be automatically restricted to 1-100.')
+                                                                 'When this option is set, the script will continue '
+                                                                   'trying until target is enrolled in.')
+parser.add_argument('-w', '--wish', default=1, type=int, help='The wish ranking of some course having identical ID '
+                                                              'with an amount of courses.')
+parser.add_argument('-W', '--weight', default=100, type=int, help='The weight of sport course, which will be '
+                                                                  'automatically restricted to 1-100.')
+parser.add_argument('-m', '--mail', nargs=2, default=None, type=str, metavar=('account', 'password'), help='The mail '
+                                                                    'account applied to send reminder email. Setting '
+                                                                    'an email address indicates sending a reminder '
+                                                                    'when target course is successfully enrolled in.')
+parser.add_argument('-S', '--server', type=str, default=None, help='The SMTP server of the mail system. Automatically '
+                                                                   'inferred if not given.')
+parser.add_argument('-r', '--receiver', type=str, default=None, help='The receiver of the reminder. The reminder will '
+                                                                     'be sent to the sender account if not given.')
 
 def main():
     args = parser.parse_args()
@@ -58,9 +75,21 @@ def main():
         wish = max(1, args.wish)
         weight = max(min(args.weight, 100), 1)
 
+        mail = args.mail
+        to_send = False
+        if mail is not None:
+            to_send = True
+            sender, password = mail
+            server = args.server
+            receiver = args.receiver
+
         def enroll():
             nonlocal year, semester, course, typ, rank, wish, weight
-            return j.choose(year, semester, course, typ, rank, wish=wish, weight=weight, verbose=True)
+            nonlocal sender, password, receiver, server
+            res = j.choose(year, semester, course, typ, rank, wish=wish, weight=weight, verbose=True)
+            if res and to_send:
+                buaa.remind(course, sender, password, receiver, server, title=f'Reminder: {course}')
+            return res
 
         def drop():
             nonlocal year, semester, course, typ, rank, wish, weight
@@ -74,16 +103,16 @@ def main():
         else:
             if args.time is None:
                 if enroll():
-                    print(f'Successfully enrolled {course}')
+                    print(f'Successfully enrolled in {course}')
                 else:
-                    print(f'Enrolling {course} failed')
+                    print(f'Enrolling in {course} failed')
             else:
                 count = 0
                 while not enroll():
                     count += 1
-                    print(f'{count}: Enrolling {course} failed')
+                    print(f'{count}: Enrolling in {course} failed')
                     time.sleep(args.time)
-                print(f'Successfully enrolled {course}')
+                print(f'Successfully enrolled in {course}')
     except: raise
 
 if __name__ == '__main__':
