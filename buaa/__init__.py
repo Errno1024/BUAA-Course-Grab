@@ -341,6 +341,9 @@ class jwxt(login):
         if weight is not None:
             data['qz'] = str(min(max(weight, 0), 100))
 
+        places_re = f'<input id="xkyq_{cid}" type="hidden" value=""/>\\s*([0-9]+)/([0-9]+)[^0-9]+?([0-9]+)/([0-9]+)'
+        places_re = re.compile(places_re)
+
         choice_token = None
         while choice_token is None:
             form = self.post(f'{self.weburl}/{self.path_id}/xslbxk/queryXsxkList', data=payload,
@@ -352,12 +355,9 @@ class jwxt(login):
                 self.refresh()
                 continue
 
-            places_re = f'<input id="xkyq_{cid}" type="hidden" value=""/>\\s*([0-9]+)/([0-9]+)[^0-9]+?([0-9]+)/([0-9]+)'
-            places_re = re.compile(places_re)
-
             places = re.search(places_re, form)
             if places is None:
-                return True
+                return self.enrolled(year, season, course_id, tail)
             if external:
                 rest = int(places.group(4)) - int(places.group(3))
             else:
@@ -375,32 +375,23 @@ class jwxt(login):
         payload1 = '&'.join(map(lambda x: f"{url_escape(x[0])}={url_escape(x[1])}", data.items()))
         self.post(f'{self.weburl}/{self.path_id}/xslbxk/saveXsxk', data=payload1, headers=headers)
 
-        form = self.post(f'{self.weburl}/{self.path_id}/xslbxk/queryXsxkList', data=payload,
-                         headers=headers).content.decode('utf8')
-        return re.search(places_re, form) is None
+        return self.enrolled(year, season, course_id, tail)
 
-    def drop(self, year, season, course_id: str, course_type='ZY', tail='001'):
+    def drop(self, year, season, course_id: str, tail='001'):
         if len(course_id) < 9 or len(course_id) > 10:
             raise (Exception)
         course_id = course_id.upper()
-        pageXkmkdm = course_type + 'L'
-        if pageXkmkdm not in ('JCL', 'TSL', 'ZYL'):
-            raise Exception
-        course_type = course_id[2]
-        if pageXkmkdm == 'ZYL' and course_type not in 'IJ':
-            course_type = 'J'
         _season = min(season, 2)
         head = '%04d-%04d' % (year - _season + 1, year - _season + 2)
         cid = f"{head}-{season}-{course_id}-{tail}"
 
         data = {
-            'rwh': '',
+            'rwh': cid,
             'pageXklb': 'xslbxk',
             'pageXnxq': f'{head}{season}',
+            'pageKcmc': course_id,
         }
         payload = '&'.join(map(lambda x: f"{url_escape(x[0])}={url_escape(x[1])}", data.items()))
-        data['rwh'] = cid
-        payload1 = '&'.join(map(lambda x: f"{url_escape(x[0])}={url_escape(x[1])}", data.items()))
         headers = {
             'Referrer': f'{self.weburl}/{self.path_id}/xslbxk/queryYxkc?pageXklb=xslbxk&pageXnxq={head}{season}',
             'Upgrade-Insecure-Requests': '1',
@@ -410,8 +401,35 @@ class jwxt(login):
             'Origin': self.weburl,
             'Content-Type': 'application/x-www-form-urlencoded',
         }
-        self.post(f'{self.weburl}/{self.path_id}/xslbxk/saveXstk', data=payload1, headers=headers)
+        self.post(f'{self.weburl}/{self.path_id}/xslbxk/saveXstk', data=payload, headers=headers)
 
+        return not self.enrolled(year, season, course_id, tail)
+
+    def enrolled(self, year, season, course_id: str, tail='001'):
+        if len(course_id) < 9 or len(course_id) > 10:
+            raise (Exception)
+        course_id = course_id.upper()
+        _season = min(season, 2)
+        head = '%04d-%04d' % (year - _season + 1, year - _season + 2)
+        cid = f"{head}-{season}-{course_id}-{tail}"
+
+        data = {
+            'rwh': '',
+            'pageXklb': 'xslbxk',
+            'pageXnxq': f'{head}{season}',
+            'pageKcmc': course_id,
+        }
+        headers = {
+            'Referrer': f'{self.weburl}/{self.path_id}/xslbxk/queryYxkc?pageXklb=xslbxk&pageXnxq={head}{season}',
+            'Upgrade-Insecure-Requests': '1',
+            'Cache-Control': 'max-age=0',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'Accept-Language': 'zh-CN,zh;q=0.9',
+            'Origin': self.weburl,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+        payload = '&'.join(map(lambda x: f"{url_escape(x[0])}={url_escape(x[1])}", data.items()))
         form = self.post(f'{self.weburl}/{self.path_id}/xslbxk/queryYxkc', data=payload,
                          headers=headers).content.decode('utf8')
-        return form.find(f'<td>{course_id}</td>') < 0
+        return form.find(f'id="{cid}"') >= 0
+
