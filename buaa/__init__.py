@@ -432,4 +432,3 @@ class jwxt(login):
         form = self.post(f'{self.weburl}/{self.path_id}/xslbxk/queryYxkc', data=payload,
                          headers=headers).content.decode('utf8')
         return form.find(f'id="{cid}"') >= 0
-
