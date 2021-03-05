@@ -346,6 +346,12 @@ class jwxt(login):
             form = self.post(f'{self.weburl}/{self.path_id}/xslbxk/queryXsxkList', data=payload,
                              headers=headers).content.decode('utf8')
 
+            if form.find('</form>') < 0:
+                if verbose:
+                    print('Refreshing cookies.')
+                self.refresh()
+                continue
+
             places_re = f'<input id="xkyq_{cid}" type="hidden" value=""/>\\s*([0-9]+)/([0-9]+)[^0-9]+?([0-9]+)/([0-9]+)'
             places_re = re.compile(places_re)
 
