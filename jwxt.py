@@ -37,6 +37,8 @@ parser.add_argument('-S', '--server', type=str, default=None, help='The SMTP ser
                                                                    'inferred if not given.')
 parser.add_argument('-r', '--receiver', type=str, default=None, help='The receiver of the reminder. The reminder will '
                                                                      'be sent to the sender account if not given.')
+parser.add_argument('-R', '--retry', type=int, default=0, help='The retry limit. The script will automatically retry '
+                                                                'when connection is aborted by server.')
 
 def main():
     args = parser.parse_args()
@@ -46,6 +48,9 @@ def main():
 
         j = jwxt(args.username, args.password, type=vpn)
         t = time.localtime()
+
+        retry_count = 0
+        retry_limit = max(args.retry, 0)
 
         course = args.course.upper()
         semester = args.semester
@@ -86,14 +91,22 @@ def main():
         def enroll():
             nonlocal year, semester, course, typ, rank, wish, weight
             nonlocal sender, password, receiver, server
-            res = j.choose(year, semester, course, typ, rank, wish=wish, weight=weight, verbose=True)
+            res = False
+            while retry_count <= retry_limit:
+                try:
+                    res = j.choose(year, semester, course, typ, rank, wish=wish, weight=weight, verbose=True)
+                except Exception as e:
+                    if retry_count < retry_limit:
+                        print(f'{e.__class__.__qualname__}: {str(e)}')
+                    else: raise
+                else: break
             if res and to_send:
                 buaa.remind(course, sender, password, receiver, server, title=f'Reminder: {course}')
             return res
 
         def drop():
             nonlocal year, semester, course, typ, rank, wish, weight
-            return j.drop(year, semester, course, typ, rank)
+            return j.drop(year, semester, course, typ)
 
         if args.drop:
             if drop():
@@ -116,4 +129,7 @@ def main():
     except: raise
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e: print(f'{e.__class__.__qualname__}: {str(e)}')
+
