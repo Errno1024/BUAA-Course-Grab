@@ -6,6 +6,8 @@ import re
 
 number_re = re.compile('^([0-9]+)')
 
+RETRY_LIMIT = 3
+
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='help', help='To show help.')
 parser.add_argument('username', type=str, help='The unified identity authentication account.')
@@ -37,8 +39,10 @@ parser.add_argument('-S', '--server', type=str, default=None, help='The SMTP ser
                                                                    'inferred if not given.')
 parser.add_argument('-r', '--receiver', type=str, default=None, help='The receiver of the reminder. The reminder will '
                                                                      'be sent to the sender account if not given.')
-parser.add_argument('-R', '--retry', type=int, default=0, help='The retry limit. The script will automatically retry '
-                                                                'when connection is aborted by server.')
+parser.add_argument('-R', '--retry', type=int, default=RETRY_LIMIT, help='The retry limit. The script will '
+                                                                         'automatically retry when connection is '
+                                                                         'aborted by server. The default retry limit '
+                                                                         f'is {RETRY_LIMIT}.')
 
 def main():
     args = parser.parse_args()
