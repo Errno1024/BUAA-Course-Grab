@@ -23,15 +23,16 @@ parser.add_argument('-T', '--type', default=None, type=str, help='The course typ
                                                                  'not provided. JC for fundamental courses, TS for '
                                                                  'general courses, and ZY for professional courses.')
 #parser.add_argument('-V', '--vpn', default=None, type=str, help='The index of VPN used.')
-parser.add_argument('-d', '--drop', action='store_true', help='Whether to leave the course.')
+parser.add_argument('-d', '--drop', action='store_true', help='Whether to drop the course.')
 parser.add_argument('-t', '--time', default=None, type=float, help='The interval between tries of enrolling. '
                                                                  'When this option is set, the script will continue '
                                                                    'trying until target is enrolled in.')
 parser.add_argument('-w', '--wish', default=1, type=int, help='The wish ranking of some course having identical ID '
-                                                              'with an amount of courses.')
+                                                              'to an amount of other courses.')
 parser.add_argument('-W', '--weight', default=100, type=int, help='The weight of sport course, which will be '
-                                                                  'automatically restricted to 1-100.')
-parser.add_argument('-m', '--mail', nargs=2, default=None, type=str, metavar=('account', 'password'), help='The mail '
+                                                                  'automatically restricted to 1-100. The default '
+                                                                  'weight is 100.')
+parser.add_argument('-m', '--mail', nargs=2, default=None, type=str, metavar=('ACCOUNT', 'PASSWORD'), help='The mail '
                                                                     'account applied to send reminder email. Setting '
                                                                     'an email address indicates sending a reminder '
                                                                     'when target course is successfully enrolled in.')
@@ -41,8 +42,8 @@ parser.add_argument('-r', '--receiver', type=str, default=None, help='The receiv
                                                                      'be sent to the sender account if not given.')
 parser.add_argument('-R', '--retry', type=int, default=RETRY_LIMIT, help='The retry limit. The script will '
                                                                          'automatically retry when connection is '
-                                                                         'aborted by server. The default retry limit '
-                                                                         f'is {RETRY_LIMIT}.')
+                                                                         'aborted unexpectedly. The default retry limit'
+                                                                         f' is {RETRY_LIMIT}.')
 
 def main():
     args = parser.parse_args()
