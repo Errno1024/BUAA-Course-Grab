@@ -1,4 +1,1 @@
 requests
-json
-re
-urllib3

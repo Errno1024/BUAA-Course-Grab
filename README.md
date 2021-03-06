@@ -6,9 +6,6 @@ This tool set has following requirements.
 
 ```
 requests
-json
-re
-urllib3
 ```
 
 The tool set contains 2 items at present.

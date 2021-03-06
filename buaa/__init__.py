@@ -1,11 +1,11 @@
 import requests
 import re
-import urllib3
 import json
 import time
 import datetime
-
 import smtp
+
+from . import urllib3
 
 PRODUCT_NAME = 'BUAA Course Grab'
 
@@ -41,9 +41,8 @@ def url_escape(url):
         url = url.replace(k, v)
     return url
 
-
 def params(url):
-    parsed = urllib3.util.parse_url(url).query
+    parsed = urllib3.parse_url(url).query
     if parsed is None:
         return {}
     res = {}
@@ -54,7 +53,6 @@ def params(url):
             v = s[1]
         res[s[0]] = v
     return res
-
 
 class CASTGC:
     def __init__(self, username, password, type=None, refresh=False):
