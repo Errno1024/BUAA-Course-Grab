@@ -9,6 +9,18 @@ from . import urllib3
 
 class BUAAException(Exception): pass
 
+def _binary_search(v, lst, key=None):
+    if not lst: return 0
+    if key is None: key = lambda x: x
+    l, r = 0, len(lst)
+    while l < r:
+        m = (l + r) // 2
+        if key(lst[m]) < v:
+            l = m + 1
+        else:
+            r = m
+    return l
+
 PRODUCT_NAME = 'BUAA Course Grab'
 
 def date(s):
@@ -139,6 +151,44 @@ class login:
         return self.token.headers
 
 
+course_time_re = re.compile(r'\[([0-9]+(?:-[0-9]+)?(?:,[0-9]+(?:-[0-9]+)?)*)(?:周)?\]'
+                            r'(?:星期)?(一|二|三|四|五|六|日|[0-9])第([0-9]+(?:-[0-9]+)?(?:,[0-9]+(?:-[0-9]+)?)*)')
+
+college_calendar_month_re = re.compile(
+    r'<div\s+class="xfyq_top">[0-9]+年([0-9]+)月</div>'
+)
+
+college_calendar_day_re = re.compile(
+    r'<td\s+align="center"\s+class="sk_gray">1</td>\s*'
+    r'<td\s+align="center"\s+class="sk_green">\s*([0-9]+)'
+)
+
+timetable_re = re.compile(
+    r'<tr (?:class="[A-Za-z0-9- ]+")?>\s*' + \
+    r'<td[^>]*>[\S\s]*?</td>\s*' * 2 + \
+    r'<td[^>]*>([\S\s]*?)</td>\s*' * 7 + \
+    r'</tr>'
+)
+
+timespan_re = r'(?:[0-9]+(?:-[0-9]+)?(?:[,，][0-9]+(?:-[0-9]+)?)*)'
+timespan_grouped_re = r'([0-9]+(?:-[0-9]+)?(?:[,，][0-9]+(?:-[0-9]+)?)*)'
+timespan_single_re = r'([0-9]+)(?:-([0-9]+))?'
+
+week_single_re = rf'(?:[^\]]*\[{timespan_re}\]周?)'
+week_single_grouped_re = re.compile(rf'^(?:([^\]]*)\[{timespan_grouped_re}\]周?)')
+
+week_re = rf'(?:{week_single_re}(?:[,，]{week_single_re})*)'
+week_grouped_re = rf'({week_single_re}(?:[,，]{week_single_re})*)'
+
+timetable_item_re = rf'{week_re}[\S\s]*?第{timespan_re}节'
+timetable_item_grouped_re = rf'{week_grouped_re}(?:</br>)?([\S\s]*?)\s*第{timespan_grouped_re}节'
+
+timetable_all_re = re.compile(
+    r'([^<]*)\s*'
+    r'</br>\s*' + \
+    rf'({timetable_item_re}(?:[,，]{timetable_item_re})*)'
+)
+
 class bykc(login):
     class course:
         def __init__(self, data):
@@ -194,14 +244,16 @@ class bykc(login):
     def headers(self):
         return {'auth_token': self.bykc_token, **super().headers}
 
-    def query(self, name):
+    def query(self, name, default=None):
+        if default is None: default = []
         try:
-            return json.loads(self.get(f'{self.weburl}/sscv/{name}').content).get('data', [])
+            return json.loads(self.get(f'{self.weburl}/sscv/{name}').content).get('data', default)
         except:
             self.refresh()
         return json.loads(self.get(f'{self.weburl}/sscv/{name}').content).get('data', [])
 
-    def api(self, name, payload={}):
+    def api(self, name, payload=None):
+        if payload is None: payload = {}
         try:
             return json.loads(self.post(
                 f'{self.weburl}/sscv/{name}',
@@ -236,7 +288,7 @@ class bykc(login):
 
     @property
     def history(self):
-        res = self.query('queryChosenCourse').get('historyCourseList', [])
+        res = self.query('queryChosenCourse', {}).get('historyCourseList', [])
         _res = []
         for c in res:
             cc = c.get('courseInfo', None)
@@ -246,7 +298,7 @@ class bykc(login):
 
     @property
     def chosen(self):
-        res = self.query('queryChosenCourse').get('courseList', [])
+        res = self.query('queryChosenCourse', {}).get('courseList', [])
         _res = []
         for c in res:
             cc = c.get('courseInfo', None)
@@ -460,6 +512,161 @@ class jwxt(login):
             return filename
         return None
 
+    def first_day(self, year, season):
+        _season = min(season, 2)
+        head = '%04d-%04d' % (year - _season + 1, year - _season + 2)
+        url = f'{self.weburl}/{self.path_id}/xlcx/queryXlcx?xnxq={head}{season}'
+        res = self.get(url)
+        m = re.search(college_calendar_month_re, res.text)
+        if m is None:
+            return None
+        month = int(m.group(1))
+        d = re.search(college_calendar_day_re, res.text)
+        if d is None:
+            return None
+        day = int(d.group(1))
+        return datetime.datetime(year=year, month=month, day=day)
+
+    class course_time:
+        def __init__(self, name, teacher, date):
+            self.name = name
+            self.teacher = teacher
+            self.date = date
+
+        def __eq__(self, other):
+            if isinstance(other, self.__class__):
+                return self.name == other.name and \
+                    self.teacher == other.teacher and \
+                    self.date == other.date
+            return NotImplemented
+
+        def __lt__(self, other):
+            if isinstance(other, self.__class__):
+                return self.date < other.date
+            elif isinstance(other, datetime.datetime):
+                return self.date < other
+            return NotImplemented
+
+        def __str__(self):
+            return f'{self.name} {self.teacher} {date2str(self.date)} - {date2str(self.date + COURSE_SPAN)}'
+
+        def __repr__(self):
+            return str(self)
+
+    def timetable(self, year, season):
+        _season = min(season, 2)
+        head = '%04d-%04d' % (year - _season + 1, year - _season + 2)
+        schedules = []
+        url = f'{self.weburl}/{self.path_id}/kbcx/queryGrkb?xnxq={head}{season}'
+        while True:
+            res = self.get(url).text
+            tables = re.findall(timetable_re, res)
+            tables = list(zip(*tables))
+            first_day = self.first_day(year, season)
+            if len(tables) == 7 and first_day:
+                break
+            self.refresh()
+        for i in range(7):
+            table = tables[i]
+            for item_raw in table:
+                if item_raw == '&nbsp': continue
+                item = re.search(timetable_all_re, item_raw)
+                if item is None: continue
+                course_name, schedule = item.groups()
+                m = re.search(timetable_item_grouped_re, schedule)
+                while m is not None:
+                    schedule = schedule[m.end() + 1:]
+                    teacher_weeks, classroom, tspan = m.groups()
+                    teacher_weeks = _teacher_weeks(teacher_weeks)
+                    tspan = timespan(tspan)
+                    tspan = list(map(time_lut, tspan))
+                    for teacher, weeks in teacher_weeks:
+                        for w in timespan(weeks):
+                            for t in tspan:
+                                date = first_day + datetime.timedelta(days=(w - 1) * 7 + i) + t
+                                schedules.append(self.course_time(
+                                    course_name,
+                                    teacher,
+                                    date,
+                                ))
+                    m = re.search(timetable_item_grouped_re, schedule)
+        return sorted(schedules)
+
+    @classmethod
+    def semester_infer(cls, month=time.localtime().tm_mon):
+        return 2 if month < 6 else (3 if month < 8 else 1)
+
+    @classmethod
+    def _schedule_available(cls, t, tspan, schedule_list, span=datetime.timedelta()):
+        pos = _binary_search(t, schedule_list)
+        if pos > 0:
+            left = schedule_list[pos - 1].date
+            if left + COURSE_SPAN + span > t:
+                return False
+        if pos < len(schedule_list):
+            right = schedule_list[pos].date
+            if right - span < t + tspan:
+                return False
+        return True
+
+
+def _teacher_weeks(teacher_weeks):
+    res = []
+    m = re.search(week_single_grouped_re, teacher_weeks)
+    while m:
+        teacher_weeks = teacher_weeks[m.end() + 1:]
+        teacher, week = m.groups()
+        res.append((re.sub(r'\s', '', teacher), week))
+        m = re.search(week_single_grouped_re, teacher_weeks)
+    return res
+
+def timespan(s: str):
+    times = re.split('[,，]', s)
+    res = []
+    for ts in times:
+        to = ts.rfind('-')
+        if to < 0:
+            res.append(int(ts))
+        else:
+            from_ = int(ts[:to])
+            to = int(ts[to + 1:])
+            for i in range(min(from_, to), max(from_, to) + 1):
+                res.append(i)
+    return sorted(res)
+
+COURSE_SPAN = datetime.timedelta(minutes=45)
+
+def time_lut(course_time):
+    course_time = min(max(int(course_time), 1), 14)
+    if course_time == 1:
+        return datetime.timedelta(hours=8, minutes=0)
+    if course_time == 2:
+        return datetime.timedelta(hours=8, minutes=50)
+    if course_time == 3:
+        return datetime.timedelta(hours=9, minutes=50)
+    if course_time == 4:
+        return datetime.timedelta(hours=10, minutes=40)
+    if course_time == 5:
+        return datetime.timedelta(hours=11, minutes=30)
+    if course_time == 6:
+        return datetime.timedelta(hours=14, minutes=0)
+    if course_time == 7:
+        return datetime.timedelta(hours=14, minutes=50)
+    if course_time == 8:
+        return datetime.timedelta(hours=15, minutes=50)
+    if course_time == 9:
+        return datetime.timedelta(hours=16, minutes=40)
+    if course_time == 10:
+        return datetime.timedelta(hours=17, minutes=30)
+    if course_time == 11:
+        return datetime.timedelta(hours=19, minutes=0)
+    if course_time == 12:
+        return datetime.timedelta(hours=19, minutes=50)
+    if course_time == 13:
+        return datetime.timedelta(hours=20, minutes=50)
+    if course_time == 14:
+        return datetime.timedelta(hours=21, minutes=40)
+    return NotImplemented
 
 def remind(course_detail, sender, password, receiver=None, server=None, title='Reminder'):
     with smtp.login_mail(sender, password, server=server) as s:

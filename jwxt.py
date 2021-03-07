@@ -66,7 +66,7 @@ def main():
         if semester is not None:
             semester = min(max(args.semester, 1), 3)
         else:
-            semester = 2 if t.tm_mon < 6 else (3 if t.tm_mon < 8 else 1)
+            semester = jwxt.semester_infer()
 
         year = args.year
         if year is None:

@@ -2,6 +2,9 @@ from buaa import bykc
 import buaa
 import argparse
 import time
+import datetime
+
+TRAVEL_TIME = 10
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='help', help='To show help.')
@@ -24,6 +27,11 @@ parser.add_argument('-t', '--time', default=None, type=float, metavar='interval'
                          'trying until all targets are enrolled in.')
 parser.add_argument('-n', '--number', default=None, type=int, metavar='amount',
                     help='The amount of courses to be enrolled.')
+parser.add_argument('-s', '--safe', nargs='?', default=NotImplemented, type=int, metavar='time',
+                    help='Safe mode. When this switch is on, the script will never attempt to enroll in a course '
+                         'in conflict with regular course timetable. If time is specified, a travel time is taken into '
+                         'consideration, ensuring safety of a higher level. The default estimated travel time is '
+                        f'{TRAVEL_TIME} (minutes).')
 parser.add_argument('-m', '--mail', nargs=2, default=None, type=str, metavar=('account@example.com', 'password'),
                     help='The mail account applied to send reminder email. Setting an email address indicates sending '
                          'a reminder when a target course is successfully enrolled in.')
@@ -31,6 +39,7 @@ parser.add_argument('-S', '--server', type=str, default=None, metavar='smtp.exam
                     help='The SMTP server of the mail system. Automatically inferred if not given.')
 parser.add_argument('-r', '--receiver', type=str, default=None, metavar='receiver@example.com',
                     help='The receiver of the reminder. The reminder will be sent to the sender account if not given.')
+
 
 def main():
     args = parser.parse_args()
@@ -48,10 +57,30 @@ def main():
 
         b = bykc(args.username, args.password, type=vpn)
 
+        safety_list = None
+        safe_span = datetime.timedelta(minutes=TRAVEL_TIME)
+        if args.safe is not NotImplemented:
+            j = buaa.jwxt(args.username, args.password, type=vpn)
+            year = time.localtime().tm_year
+            safety_list = j.timetable(year, buaa.jwxt.semester_infer())
+            if args.safe:
+                safe_span = datetime.timedelta(minutes=max(args.safe, 0))
+
         def available_list():
-            course_list = set(b.selectable.keys())
+            nonlocal safety_list, safe_span
+            sel = b.selectable
+            course_list = set(sel.keys())
             chosen = set(b.chosen.keys())
-            return list(course_list.difference(chosen))
+            res = course_list.difference(chosen)
+            if safety_list:
+                _res = []
+                for c in res:
+                    d = sel[c].start
+                    dt = sel[c].end - d
+                    if buaa.jwxt._schedule_available(d, dt, safety_list, safe_span):
+                        _res.append(c)
+                return _res
+            return list(res)
 
         if args.forecast:
             fore = b.forecast
