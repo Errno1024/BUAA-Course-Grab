@@ -223,7 +223,7 @@ class bykc(login):
         return res
 
     @property
-    def fore(self):
+    def forecast(self):
         res = self.query('queryForeCourse')
         return self.courses(res)
 

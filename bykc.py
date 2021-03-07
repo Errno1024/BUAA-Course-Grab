@@ -10,10 +10,16 @@ parser.add_argument('password', help='Password of the account.')
 parser.add_argument('enroll', nargs='*', type=int, default=[], help='The IDs of courses to enroll.')
 #parser.add_argument('-V', '--vpn', default=None, type=str, help='The index of VPN used.')
 parser.add_argument('-l', '--list', action='store_true', help='To show course list. If this switch is used '
-                                                              'with -t or --time, the enroll list will be ignored and replaced by course list.')
+                                                              'with -t or --time, the target list will be ignored and '
+                                                              'replaced by course list.')
+parser.add_argument('-c', '--chosen', action='store_true', help='To show courses already enrolled in. If this switch is'
+                                                                ' used with -l or --list, courses not enrolled in will'
+                                                                'be showed.')
+parser.add_argument('-f', '--forecast', action='store_true', help='To show courses in the forecast list.')
 parser.add_argument('-d', '--drop', nargs='*', default=[], help='The IDs of courses to drop.')
 parser.add_argument('-t', '--time', default=None, type=float, help='The interval between tries of enrolling.'
-                                                                 'When this option is set, the script will continue trying until all targets are enrolled.')
+                                                                 'When this option is set, the script will continue '
+                                                                   'trying until all targets are enrolled in.')
 parser.add_argument('-n', '--number', default=None, type=int, help='The amount of courses to be enrolled.')
 parser.add_argument('-m', '--mail', nargs=2, default=None, type=str, metavar=('account', 'password'), help='The mail '
                                                                     'account applied to send reminder email. Setting '
@@ -39,14 +45,45 @@ def main():
             receiver = args.receiver
 
         b = bykc(args.username, args.password, type=vpn)
-        if args.list:
-            for _, v in b.selectable.items():
-                print(v, end='')
 
         def available_list():
             course_list = set(b.selectable.keys())
             chosen = set(b.chosen.keys())
             return list(course_list.difference(chosen))
+
+        if args.forecast:
+            fore = b.forecast
+            if fore:
+                for k, v in fore.items():
+                    print(v, end='')
+            else:
+                print('No upcoming course.')
+
+        if args.list:
+            if args.chosen:
+                course_list = set(b.selectable.keys())
+                chosen = set(b.chosen.keys())
+                available = course_list.difference(chosen)
+                if available:
+                    for k, v in b.selectable.items():
+                        if k in available:
+                            print(v, end='')
+                else:
+                    print('No available course.')
+            else:
+                sel = b.selectable
+                if sel:
+                    for _, v in sel.items():
+                        print(v, end='')
+                else:
+                    print('No course at present.')
+        elif args.chosen:
+            ch = b.chosen
+            if ch:
+                for _, v in ch.items():
+                    print(v, end='')
+            else:
+                print('No course chosen.')
 
         for d in args.drop:
             try:
