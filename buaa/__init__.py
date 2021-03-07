@@ -7,6 +7,8 @@ import smtp
 
 from . import urllib3
 
+class BUAAException(Exception): pass
+
 PRODUCT_NAME = 'BUAA Course Grab'
 
 def date(s):
@@ -303,11 +305,11 @@ class jwxt(login):
 
     def choose(self, year, season, course_id: str, course_type='ZY', tail='001', *, external=False, wish=None, weight=None, verbose=False):
         if len(course_id) < 9 or len(course_id) > 10:
-            raise (Exception)
+            raise BUAAException('Invalid course ID')
         course_id = course_id.upper()
         pageXkmkdm = course_type + 'L'
         if pageXkmkdm not in ('JCL', 'TSL', 'ZYL'):
-            raise Exception
+            raise BUAAException('Invalid course type')
         course_type = course_id[2]
         if pageXkmkdm == 'ZYL' and course_type not in 'IJ':
             course_type = 'J'
@@ -385,7 +387,7 @@ class jwxt(login):
 
     def drop(self, year, season, course_id: str, tail='001'):
         if len(course_id) < 9 or len(course_id) > 10:
-            raise (Exception)
+            raise BUAAException('Invalid course ID')
         course_id = course_id.upper()
         _season = min(season, 2)
         head = '%04d-%04d' % (year - _season + 1, year - _season + 2)
@@ -413,7 +415,7 @@ class jwxt(login):
 
     def enrolled(self, year, season, course_id: str, tail='001'):
         if len(course_id) < 9 or len(course_id) > 10:
-            raise (Exception)
+            raise BUAAException('Invalid course ID')
         course_id = course_id.upper()
         _season = min(season, 2)
         head = '%04d-%04d' % (year - _season + 1, year - _season + 2)

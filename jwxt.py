@@ -3,6 +3,7 @@ import buaa
 import argparse
 import time
 import re
+import sys, os
 
 number_re = re.compile('^([0-9]+)')
 
@@ -12,7 +13,8 @@ parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='help', help='To show help.')
 parser.add_argument('username', type=str, help='The unified identity authentication account.')
 parser.add_argument('password', type=str, help='Password of the account.')
-parser.add_argument('course', type=str, help='The ID of courses to enroll in.')
+parser.add_argument('course', nargs='?', type=str,
+                    help='The ID of courses to enroll in. Required except for timetable output.')
 parser.add_argument('rank', nargs='?', type=str,
                     help='The rank indicates the n-th of courses with the same ID.')
 parser.add_argument('-y', '--year', default=None, type=int, metavar='YYYY',
@@ -60,7 +62,6 @@ def main():
         retry_count = 0
         retry_limit = max(args.retry, 0)
 
-        course = args.course.upper()
         semester = args.semester
         if semester is not None:
             semester = min(max(args.semester, 1), 3)
@@ -74,9 +75,16 @@ def main():
         if args.export is not ...:
             j.export_timetable(year, semester, file=args.export)
 
+        if args.course is None:
+            if args.export is ...:
+                print(f'{os.path.basename(sys.argv[0])}: error: the following arguments are required: course')
+            return
+
+        course = args.course.upper()
+
         typ = args.type
         if not typ in ('JC', 'TS', 'ZY'):
-            typ = jwxt.course_type(course[2])
+            typ = jwxt.course_type(course[2] if len(course) >= 3 else 'I')
 
         rank = args.rank
         if rank is None:
@@ -107,6 +115,8 @@ def main():
                 try:
                     res = j.choose(year, semester, course, typ, rank, wish=wish, weight=weight, verbose=True)
                 except Exception as e:
+                    if isinstance(e, buaa.BUAAException):
+                        raise
                     if retry_count < retry_limit:
                         print(f'{e.__class__.__qualname__}: {str(e)}')
                     else: raise
