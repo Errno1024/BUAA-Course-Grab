@@ -20,6 +20,9 @@ parser.add_argument('-y', '--year', default=None, type=int, metavar='YYYY',
                          'semester.')
 parser.add_argument('-s', '--semester', default=None, type=int, metavar='1 | 2 | 3',
                     help='The semester. Its value will be restricted to 1-3.')
+parser.add_argument('-e', '--export', nargs='?', default=..., type=str, metavar='file',
+                    help='Whether to export timetable of the specific semester. If specified file name, the timetable '
+                         'will be renamed.')
 parser.add_argument('-T', '--type', default=None, type=str, metavar='JC | TS | ZY',
                     help='The course type, which is inferred from course ID if not provided. JC for fundamental courses'
                          ', TS for general courses, and ZY for professional courses.')
@@ -67,6 +70,9 @@ def main():
         year = args.year
         if year is None:
             year = t.tm_year
+
+        if args.export is not ...:
+            j.export_timetable(year, semester, file=args.export)
 
         typ = args.type
         if not typ in ('JC', 'TS', 'ZY'):

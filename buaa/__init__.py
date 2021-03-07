@@ -439,6 +439,26 @@ class jwxt(login):
                          headers=headers).content.decode('utf8')
         return form.find(f'id="{cid}"') >= 0
 
+    def export_timetable(self, year, season, file: str=None):
+        attachment_re = re.compile(r'^attachment;\s+filename="([^"]*)"$')
+
+        _season = min(season, 2)
+        head = '%04d-%04d' % (year - _season + 1, year - _season + 2)
+        url = f'{self.weburl}/{self.path_id}/kbcx/ExportGrKbxx?xnxq={head}{season}'
+        res = self.get(url)
+        cd = res.headers.get('Content-Disposition', '')
+        cd = re.match(attachment_re, cd)
+        if cd is not None:
+            if file:
+                filename = file
+            else:
+                filename = cd.group(1).encode('iso-8859-1').decode('gbk')
+            with open(filename, 'wb') as f:
+                f.write(res.content)
+            return cd.group(1)
+        return None
+
+
 def remind(course_detail, sender, password, receiver=None, server=None, title='Reminder'):
     with smtp.login_mail(sender, password, server=server) as s:
         smtp.mail(s, smtp.mime_from_file(title, 'src/reminder.html', replace={
