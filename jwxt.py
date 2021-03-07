@@ -13,37 +13,37 @@ parser.add_argument('-h', '--help', action='help', help='To show help.')
 parser.add_argument('username', type=str, help='The unified identity authentication account.')
 parser.add_argument('password', type=str, help='Password of the account.')
 parser.add_argument('course', type=str, help='The ID of courses to enroll in.')
-parser.add_argument('rank', nargs='?', type=str, help='The rank indicates the n-th of courses with the same ID.')
-parser.add_argument('-y', '--year', default=None, type=int, help='The current year. The academic year will be '
-                                                                 'automatically calculated according to year and '
-                                                                 'semester.')
-parser.add_argument('-s', '--semester', default=None, type=int, help='The semester. Its value will be restricted '
-                                                                     'to 1-3.')
-parser.add_argument('-T', '--type', default=None, type=str, help='The course type, which is inferred from course ID if '
-                                                                 'not provided. JC for fundamental courses, TS for '
-                                                                 'general courses, and ZY for professional courses.')
+parser.add_argument('rank', nargs='?', type=str,
+                    help='The rank indicates the n-th of courses with the same ID.')
+parser.add_argument('-y', '--year', default=None, type=int, metavar='YYYY',
+                    help='The current year. The academic year will be automatically calculated according to year and '
+                         'semester.')
+parser.add_argument('-s', '--semester', default=None, type=int, metavar='1 | 2 | 3',
+                    help='The semester. Its value will be restricted to 1-3.')
+parser.add_argument('-T', '--type', default=None, type=str, metavar='JC | TS | ZY',
+                    help='The course type, which is inferred from course ID if not provided. JC for fundamental courses'
+                         ', TS for general courses, and ZY for professional courses.')
 #parser.add_argument('-V', '--vpn', default=None, type=str, help='The index of VPN used.')
-parser.add_argument('-d', '--drop', action='store_true', help='Whether to drop the course.')
-parser.add_argument('-t', '--time', default=None, type=float, help='The interval between tries of enrolling. '
-                                                                 'When this option is set, the script will continue '
-                                                                   'trying until target is enrolled in.')
-parser.add_argument('-w', '--wish', default=1, type=int, help='The wish ranking of some course having identical ID '
-                                                              'to an amount of other courses.')
-parser.add_argument('-W', '--weight', default=100, type=int, help='The weight of sport course, which will be '
-                                                                  'automatically restricted to 1-100. The default '
-                                                                  'weight is 100.')
-parser.add_argument('-m', '--mail', nargs=2, default=None, type=str, metavar=('ACCOUNT', 'PASSWORD'), help='The mail '
-                                                                    'account applied to send reminder email. Setting '
-                                                                    'an email address indicates sending a reminder '
-                                                                    'when target course is successfully enrolled in.')
-parser.add_argument('-S', '--server', type=str, default=None, help='The SMTP server of the mail system. Automatically '
-                                                                   'inferred if not given.')
-parser.add_argument('-r', '--receiver', type=str, default=None, help='The receiver of the reminder. The reminder will '
-                                                                     'be sent to the sender account if not given.')
-parser.add_argument('-R', '--retry', type=int, default=RETRY_LIMIT, help='The retry limit. The script will '
-                                                                         'automatically retry when connection is '
-                                                                         'aborted unexpectedly. The default retry limit'
-                                                                         f' is {RETRY_LIMIT}.')
+parser.add_argument('-d', '--drop', action='store_true',
+                    help='Whether to drop the course.')
+parser.add_argument('-t', '--time', default=None, type=float, metavar='interval',
+                    help='The interval between tries of enrolling. When this option is set, the script will continue '
+                         'trying until target is enrolled in.')
+parser.add_argument('-w', '--wish', default=1, type=int, metavar='n-th',
+                    help='The wish ranking of some course having identical ID to an amount of other courses.')
+parser.add_argument('-W', '--weight', default=100, type=int, metavar='1-100',
+                    help='The weight of sport course, which will be automatically restricted to 1-100. The default '
+                         'weight is 100.')
+parser.add_argument('-m', '--mail', nargs=2, default=None, type=str, metavar=('account@example.com', 'password'),
+                    help='The mail account applied to send reminder email. Setting an email address indicates sending '
+                         'a reminder when target course is successfully enrolled in.')
+parser.add_argument('-S', '--server', type=str, default=None, metavar='smtp.example.com',
+                    help='The SMTP server of the mail system. Automatically inferred if not given.')
+parser.add_argument('-r', '--receiver', type=str, default=None, metavar='receiver@example.com',
+                    help='The receiver of the reminder. The reminder will be sent to the sender account if not given.')
+parser.add_argument('-R', '--retry', type=int, default=RETRY_LIMIT, metavar='limit',
+                    help='The retry limit. The script will automatically retry when connection is aborted unexpectedly'
+                        f'. The default retry limit is {RETRY_LIMIT}.')
 
 def main():
     args = parser.parse_args()

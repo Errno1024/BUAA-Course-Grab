@@ -9,26 +9,28 @@ parser.add_argument('username', help='The unified identity authentication accoun
 parser.add_argument('password', help='Password of the account.')
 parser.add_argument('enroll', nargs='*', type=int, default=[], help='The IDs of courses to enroll.')
 #parser.add_argument('-V', '--vpn', default=None, type=str, help='The index of VPN used.')
-parser.add_argument('-l', '--list', action='store_true', help='To show course list. If this switch is used '
-                                                              'with -t or --time, the target list will be ignored and '
-                                                              'replaced by course list.')
-parser.add_argument('-c', '--chosen', action='store_true', help='To show courses already enrolled in. If this switch is'
-                                                                ' used with -l or --list, courses not enrolled in will'
-                                                                'be showed.')
-parser.add_argument('-f', '--forecast', action='store_true', help='To show courses in the forecast list.')
-parser.add_argument('-d', '--drop', nargs='*', default=[], help='The IDs of courses to drop.')
-parser.add_argument('-t', '--time', default=None, type=float, help='The interval between tries of enrolling.'
-                                                                 'When this option is set, the script will continue '
-                                                                   'trying until all targets are enrolled in.')
-parser.add_argument('-n', '--number', default=None, type=int, help='The amount of courses to be enrolled.')
-parser.add_argument('-m', '--mail', nargs=2, default=None, type=str, metavar=('account', 'password'), help='The mail '
-                                                                    'account applied to send reminder email. Setting '
-                                                                    'an email address indicates sending a reminder '
-                                                                    'when a target course is successfully enrolled in.')
-parser.add_argument('-S', '--server', type=str, default=None, help='The SMTP server of the mail system. Automatically '
-                                                                   'inferred if not given.')
-parser.add_argument('-r', '--receiver', type=str, default=None, help='The receiver of the reminder. The reminder will '
-                                                                     'be sent to the sender account if not given.')
+parser.add_argument('-l', '--list', action='store_true',
+                    help='To show course list. If this switch is used with -t or --time, the target list will be '
+                         'ignored and replaced by course list.')
+parser.add_argument('-c', '--chosen', action='store_true',
+                    help='To show courses already enrolled in. If this switch is used with -l or --list, courses not '
+                         'enrolled in will be showed.')
+parser.add_argument('-f', '--forecast', action='store_true',
+                    help='To show courses in the forecast list.')
+parser.add_argument('-d', '--drop', nargs='*', default=[], metavar='id',
+                    help='The IDs of courses to drop.')
+parser.add_argument('-t', '--time', default=None, type=float, metavar='interval',
+                    help='The interval between tries of enrolling. When this option is set, the script will continue '
+                         'trying until all targets are enrolled in.')
+parser.add_argument('-n', '--number', default=None, type=int, metavar='amount',
+                    help='The amount of courses to be enrolled.')
+parser.add_argument('-m', '--mail', nargs=2, default=None, type=str, metavar=('account@example.com', 'password'),
+                    help='The mail account applied to send reminder email. Setting an email address indicates sending '
+                         'a reminder when a target course is successfully enrolled in.')
+parser.add_argument('-S', '--server', type=str, default=None, metavar='smtp.example.com',
+                    help='The SMTP server of the mail system. Automatically inferred if not given.')
+parser.add_argument('-r', '--receiver', type=str, default=None, metavar='receiver@example.com',
+                    help='The receiver of the reminder. The reminder will be sent to the sender account if not given.')
 
 def main():
     args = parser.parse_args()
