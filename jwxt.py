@@ -73,7 +73,11 @@ def main():
             year = t.tm_year
 
         if args.export is not ...:
-            j.export_timetable(year, semester, file=args.export)
+            filename = j.export_timetable(year, semester, file=args.export)
+            if filename is not None:
+                print(f'Successfully saved timetable in {filename}.')
+            else:
+                print(f'Failed to fetch timetable.')
 
         if args.course is None:
             if args.export is ...:
