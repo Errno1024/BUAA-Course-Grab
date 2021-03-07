@@ -457,7 +457,7 @@ class jwxt(login):
                 filename = cd.group(1).encode('iso-8859-1').decode('gbk')
             with open(filename, 'wb') as f:
                 f.write(res.content)
-            return cd.group(1)
+            return filename
         return None
 
 
