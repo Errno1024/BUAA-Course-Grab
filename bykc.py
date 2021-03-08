@@ -150,7 +150,10 @@ def main():
                     print(f'Successfully enrolled in {e}.')
                     if to_send:
                         e_name = str(e)
-                        buaa.remind(e_name, sender, password, receiver, server, title=f'Reminder: BYKC-{e}')
+                        try:
+                            mail_res = buaa.remind(e_name, sender, password, receiver, server, title=f'Reminder: BYKC-{e}')
+                            if not mail_res: print('Failed to send reminder message.')
+                        except: print('Failed to send reminder message.')
                 else:
                     newlist.append(e)
                     amount += 1

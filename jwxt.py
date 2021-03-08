@@ -126,7 +126,10 @@ def main():
                     else: raise
                 else: break
             if res and to_send:
-                buaa.remind(course, sender, password, receiver, server, title=f'Reminder: {course}')
+                try:
+                    mail_res = buaa.remind(course, sender, password, receiver, server, title=f'Reminder: {course}')
+                    if not mail_res: print('Failed to send reminder message.')
+                except: print('Failed to send reminder message.')
             return res
 
         def drop():

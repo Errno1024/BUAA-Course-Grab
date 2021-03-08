@@ -40,7 +40,10 @@ class login:
         self.sender = sender
 
     def __enter__(self):
-        self.smtp.login(self.username, self.password)
+        try:
+            self.smtp.login(self.username, self.password)
+        except _smtplib.SMTPException:
+            return None
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -59,6 +62,8 @@ def login_mail(username, password, sender=None, server=None):
     return login(username, password, server=server, sender=sender)
 
 def mail(smtp: login, mime: _mimebase, sender=None, receiver=None):
+    if not isinstance(smtp, login):
+        return False
     if sender is None:
         sender = smtp.sender
     if sender is None:
