@@ -121,7 +121,7 @@ def main():
                 print('No course chosen.')
 
         if args.drop:
-            drop = set(args.drop).difference(ch)
+            drop = set(args.drop).intersection(ch)
             for d in drop:
                 for _ in range(retry_limit):
                     try:
