@@ -5,7 +5,7 @@ import time
 import datetime
 
 TRAVEL_TIME = 10
-RETRY_LIMIT = 8
+RETRY_LIMIT = 16
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='help', help='To show help.')
@@ -26,6 +26,8 @@ parser.add_argument('-d', '--drop', nargs='*', default=[], metavar='id', type=in
 parser.add_argument('-t', '--time', default=None, type=float, metavar='interval',
                     help='The interval between tries of enrolling. When this option is set, the script will continue '
                          'trying until all targets are enrolled in.')
+parser.add_argument('-C', '--continuous', action='store_true',
+                    help='If this switch is on, the script will continuously attempt to enroll in courses available.')
 parser.add_argument('-n', '--number', default=None, type=int, metavar='amount',
                     help='The amount of courses to be enrolled.')
 parser.add_argument('-s', '--safe', nargs='?', default=NotImplemented, type=int, metavar='time',
@@ -144,6 +146,8 @@ def main():
             if args.list:
                 elist = available_list()
             newlist = []
+            if not elist:
+                print('No available course.')
             for e in elist:
                 res = b.enroll(e)
                 if res:
@@ -166,7 +170,7 @@ def main():
         else:
             if args.list:
                 elist = available_list()
-            while elist or amount >= max_:
+            while elist or amount >= max_ or args.continuous:
                 enroll()
                 time.sleep(args.time)
             print('Enrolled in all targets')
