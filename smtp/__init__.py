@@ -115,8 +115,11 @@ def mime_html(subject, html, from_=None, to=None):
 def _re_var_escape(s):
     return re.sub(r'([\.\*\\\+\^\$\(\)\[\]\|\{\}\?])', '\\\\\\1', s)
 
+def _re_sub_escape(s):
+    return re.sub(r'\\([0-9]+)', '\\\\\\1', s)
+
 def re_replacer(variables):
     res = {}
     for k, v in variables.items():
-        res['\\{\\{ *%s *\\}\\}' % _re_var_escape(k)] = _re_var_escape(str(v))
+        res['\\{\\{ *%s *\\}\\}' % _re_var_escape(k)] = _re_sub_escape(str(v))
     return res

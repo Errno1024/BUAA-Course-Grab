@@ -26,8 +26,11 @@ parser.add_argument('-d', '--drop', nargs='*', default=[], metavar='id', type=in
 parser.add_argument('-t', '--time', default=None, type=float, metavar='interval',
                     help='The interval between tries of enrolling. When this option is set, the script will continue '
                          'trying until all targets are enrolled in.')
-parser.add_argument('-C', '--continuous', action='store_true',
-                    help='If this switch is on, the script will continuously attempt to enroll in courses available.')
+parser.add_argument('-C', '--continuous', action='count',
+                    help='If this switch is on, the script will continuously attempt to enroll in courses available. '
+                         'If this switch is used twice with -l and -t, the script will automatically output notice '
+                         'when new courses become selectable instead of enrolling; if -m is also passed, notice '
+                         'messages will be sent.')
 parser.add_argument('-n', '--number', default=None, type=int, metavar='amount',
                     help='The amount of courses to be enrolled.')
 parser.add_argument('-s', '--safe', nargs='?', default=NotImplemented, type=int, metavar='time',
@@ -164,16 +167,37 @@ def main():
                     print(f'Enrolling in {e} failed.')
             elist = newlist
 
+
+        def list_check():
+            nonlocal elist, b
+            newlist = b.selectable
+            new = set(newlist.keys()).difference(elist)
+            elist.update(new)
+            for k in new:
+                print(newlist[k], end='')
+                if to_send:
+                    try:
+                        mail_res = buaa.bykc_notice(newlist[k], sender, password, receiver, server)
+                        if not mail_res: print('Failed to send notice.')
+                    except:
+                        print('Failed to send notice.')
+
         if args.time is None:
             if not args.list:
                 enroll()
         else:
-            if args.list:
-                elist = available_list()
-            while elist or amount >= max_ or args.continuous:
-                enroll()
-                time.sleep(args.time)
-            print('Enrolled in all targets')
+            if args.continuous > 1 and args.list:
+                elist = set(b.selectable.keys())
+                while True:
+                    list_check()
+                    time.sleep(args.time)
+            else:
+                if args.list:
+                    elist = available_list()
+                while elist or amount >= max_ or args.continuous == 1:
+                    enroll()
+                    time.sleep(args.time)
+                print('Enrolled in all targets')
     except: raise
 
 if __name__ == '__main__':

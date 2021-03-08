@@ -229,7 +229,7 @@ class bykc(login):
     def loginurl(self):
         return f'{self.weburl}/sscv/casLogin'
 
-    def __init__(self, *args, retry_limit=3, **kwargs):
+    def __init__(self, *args, retry_limit=16, **kwargs):
         self.token = CASTGC(*args, **kwargs)
         self.retry_limit = retry_limit
         super().__init__(self.loginurl, self.token)
@@ -691,7 +691,25 @@ def time_lut(course_time):
         return datetime.timedelta(hours=21, minutes=40)
     return NotImplemented
 
-def remind(course_detail, sender, password, receiver=None, server=None, title='Reminder'):
+def mail(args, sender, password, receiver=None, server=None, title='Reminder', file='src/reminder.html'):
     with smtp.login_mail(sender, password, server=server) as s:
-        smtp.mail(s, smtp.mime_from_file(title, 'src/reminder.html', replace={
-            'course_detail': course_detail, 'product_name': PRODUCT_NAME}), receiver=receiver)
+        return smtp.mail(s, smtp.mime_from_file(title, file, replace={'product_name': PRODUCT_NAME, **args}), receiver=receiver)
+
+def remind(course_detail, sender, password, receiver=None, server=None, title='Reminder'):
+    return mail({'course_detail': course_detail}, sender, password, receiver=receiver, server=server, title=title, file='src/reminder.html')
+
+def bykc_notice(course: bykc.course, sender, password, receiver=None, server=None, title='BYKC Notice: %s'):
+    return mail({
+        'course_id': course.id,
+        'course_name': course.name,
+        'organizer': course.provider,
+        'lecturer': course.teacher,
+        'campus': course.campus,
+        'classroom': course.classroom,
+        'college': course.college,
+        'start_time': date2str(course.start),
+        'end_time': date2str(course.end),
+        'enroll_start': date2str(course.select_start),
+        'enroll_end': date2str(course.select_end),
+        'max': course.max,
+    }, sender, password, receiver=receiver, server=server, title=title % ('%s %s' % (course.id, course.name)), file='src/bykc_notice.html')
