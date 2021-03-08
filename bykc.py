@@ -5,6 +5,7 @@ import time
 import datetime
 
 TRAVEL_TIME = 10
+RETRY_LIMIT = 3
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='help', help='To show help.')
@@ -46,6 +47,8 @@ def main():
 
     try:
         vpn = getattr(args, 'vpn', None)
+
+        retry_limit = getattr(args, 'retry', RETRY_LIMIT)
 
         mail = args.mail
         to_send = False
@@ -90,10 +93,12 @@ def main():
             else:
                 print('No upcoming course.')
 
+        ch = b.chosen
+
         if args.list:
             if args.chosen:
                 course_list = set(b.selectable.keys())
-                chosen = set(b.chosen.keys())
+                chosen = set(ch.keys())
                 available = course_list.difference(chosen)
                 if available:
                     for k, v in b.selectable.items():
@@ -109,22 +114,23 @@ def main():
                 else:
                     print('No course at present.')
         elif args.chosen:
-            ch = b.chosen
             if ch:
                 for _, v in ch.items():
                     print(v, end='')
             else:
                 print('No course chosen.')
 
-        for d in args.drop:
-            try:
-                res = b.drop(d)
-                if res:
-                    print(f'Successfully dropped {d}')
-                else:
-                    print(f'Failed to drop {d}')
-            except:
-                pass
+        if args.drop:
+            drop = set(args.drop).difference(ch)
+            for d in drop:
+                for _ in range(retry_limit):
+                    try:
+                        res = b.drop(d)
+                        if res:
+                            print(f'Successfully dropped {d}.')
+                            break
+                    except: pass
+                    print(f'Failed to drop {d}.' + (' Retrying.' if _ < retry_limit - 1 else ''))
 
         elist = args.enroll
         amount = 0
@@ -139,14 +145,14 @@ def main():
             for e in elist:
                 res = b.enroll(e)
                 if res:
-                    print(f'Successfully enrolled in {e}')
+                    print(f'Successfully enrolled in {e}.')
                     if to_send:
                         e_name = str(e)
                         buaa.remind(e_name, sender, password, receiver, server, title=f'Reminder: BYKC-{e}')
                 else:
                     newlist.append(e)
                     amount += 1
-                    print(f'Enrolling in {e} failed')
+                    print(f'Enrolling in {e} failed.')
             elist = newlist
 
         if args.time is None:
