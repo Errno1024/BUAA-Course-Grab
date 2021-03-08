@@ -5,7 +5,7 @@ import time
 import datetime
 
 TRAVEL_TIME = 10
-RETRY_LIMIT = 3
+RETRY_LIMIT = 8
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='help', help='To show help.')
@@ -21,7 +21,7 @@ parser.add_argument('-c', '--chosen', action='store_true',
                          'enrolled in will be showed.')
 parser.add_argument('-f', '--forecast', action='store_true',
                     help='To show courses in the forecast list.')
-parser.add_argument('-d', '--drop', nargs='*', default=[], metavar='id',
+parser.add_argument('-d', '--drop', nargs='*', default=[], metavar='id', type=int,
                     help='The IDs of courses to drop.')
 parser.add_argument('-t', '--time', default=None, type=float, metavar='interval',
                     help='The interval between tries of enrolling. When this option is set, the script will continue '
@@ -40,7 +40,9 @@ parser.add_argument('-S', '--server', type=str, default=None, metavar='smtp.exam
                     help='The SMTP server of the mail system. Automatically inferred if not given.')
 parser.add_argument('-r', '--receiver', type=str, default=None, metavar='receiver@example.com',
                     help='The receiver of the reminder. The reminder will be sent to the sender account if not given.')
-
+parser.add_argument('-R', '--retry', type=int, default=RETRY_LIMIT, metavar='limit',
+                    help='The retry limit. The script will automatically retry when connection is aborted unexpectedly'
+                        f'. The default retry limit is {RETRY_LIMIT}.')
 
 def main():
     args = parser.parse_args()
@@ -58,7 +60,7 @@ def main():
             server = args.server
             receiver = args.receiver
 
-        b = bykc(args.username, args.password, type=vpn)
+        b = bykc(args.username, args.password, type=vpn, retry_limit=retry_limit)
 
         safety_list = None
         safe_span = datetime.timedelta(minutes=TRAVEL_TIME)
@@ -121,7 +123,7 @@ def main():
                 print('No course chosen.')
 
         if args.drop:
-            drop = set(args.drop).intersection(ch)
+            drop = set(args.drop).intersection(ch.keys())
             for d in drop:
                 for _ in range(retry_limit):
                     try:
@@ -156,7 +158,8 @@ def main():
             elist = newlist
 
         if args.time is None:
-            enroll()
+            if not args.list:
+                enroll()
         else:
             if args.list:
                 elist = available_list()

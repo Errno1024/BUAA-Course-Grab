@@ -229,8 +229,9 @@ class bykc(login):
     def loginurl(self):
         return f'{self.weburl}/sscv/casLogin'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, retry_limit=3, **kwargs):
         self.token = CASTGC(*args, **kwargs)
+        self.retry_limit = retry_limit
         super().__init__(self.loginurl, self.token)
         self.bykc_token = params(self.url)
         while self.bykc_token is None:
@@ -278,17 +279,31 @@ class bykc(login):
 
     @property
     def forecast(self):
-        res = self.query('queryForeCourse')
+        res = None
+        for _ in range(self.retry_limit + 1):
+            res = self.query('queryForeCourse', None)
+            if res is not None: break
+        if res is None: raise BUAAException('Failed to get forecast')
         return self.courses(res)
 
     @property
     def selectable(self):
-        res = self.query('querySelectableCourse')
+        res = None
+        for _ in range(self.retry_limit + 1):
+            res = self.query('querySelectableCourse', None)
+            if res is not None: break
+        if res is None: raise BUAAException('Failed to get selectable course list')
         return self.courses(res)
 
     @property
     def history(self):
-        res = self.query('queryChosenCourse', {}).get('historyCourseList', [])
+        res = None
+        for _ in range(self.retry_limit + 1):
+            res = self.query('queryChosenCourse', None)
+            if res is None or not isinstance(res, dict): self.refresh()
+            else: break
+        if res is None or not isinstance(res, dict): raise BUAAException('Failed to get history')
+        res = res.get('historyCourseList', [])
         _res = []
         for c in res:
             cc = c.get('courseInfo', None)
@@ -298,7 +313,13 @@ class bykc(login):
 
     @property
     def chosen(self):
-        res = self.query('queryChosenCourse', {}).get('courseList', [])
+        res = None
+        for _ in range(self.retry_limit + 1):
+            res = self.query('queryChosenCourse', None)
+            if res is None or not isinstance(res, dict): self.refresh()
+            else: break
+        if res is None or not isinstance(res, dict): raise BUAAException('Failed to get chosen courses')
+        res = res.get('courseList', [])
         _res = []
         for c in res:
             cc = c.get('courseInfo', None)
@@ -307,9 +328,11 @@ class bykc(login):
         return self.courses(_res)
 
     def detail(self, id):
-        res = self.api('queryCourseById', {'id': id})
-        if res is None:
-            return None
+        res = None
+        for _ in range(self.retry_limit + 1):
+            res = self.api('queryCourseById', {'id': id})
+            if res is not None: break
+        if res is None: raise BUAAException('Failed to get course detail')
         return self.course(res)
 
     def enroll(self, id):
