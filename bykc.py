@@ -4,8 +4,8 @@ import argparse
 import time
 import datetime
 
-TRAVEL_TIME = 10
-RETRY_LIMIT = 16
+TRAVEL_TIME = 60
+RETRY_LIMIT = 128
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='help', help='To show help.')
@@ -172,6 +172,9 @@ def main():
             nonlocal elist, b
             newlist = b.selectable
             new = set(newlist.keys()).difference(elist)
+            if not new:
+                print('No courses detected.')
+                return
             elist.update(new)
             for k in new:
                 print(newlist[k], end='')
