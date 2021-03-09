@@ -180,7 +180,7 @@ def main():
                 print(newlist[k], end='')
                 if to_send:
                     try:
-                        mail_res = buaa.bykc_notice(newlist[k], sender, password, receiver, server)
+                        mail_res = buaa.bykc_notice(b.detail(k), sender, password, receiver, server)
                         if not mail_res: print('Failed to send notice.')
                     except:
                         print('Failed to send notice.')

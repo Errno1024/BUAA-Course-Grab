@@ -206,6 +206,7 @@ class bykc(login):
             self.start = date(data['courseStartDate'])
             self.end = date(data['courseEndDate'])
             self.classroom = data['coursePosition']
+            self.desc = data.get('courseDesc', None)
 
         def __str__(self):
             return \
@@ -214,7 +215,7 @@ class bykc(login):
                     f"Start:  {date2str(self.start)}\n" \
                     f"End:    {date2str(self.end)}\n" \
                     f"Enroll: {date2str(self.select_start)} - {date2str(self.select_end)}\n" \
-                    ""
+                    f""
 
         def __repr__(self):
             return str(self)
@@ -711,5 +712,6 @@ def bykc_notice(course: bykc.course, sender, password, receiver=None, server=Non
         'end_time': date2str(course.end),
         'enroll_start': date2str(course.select_start),
         'enroll_end': date2str(course.select_end),
+        'description': course.desc if course.desc is not None else '',
         'max': course.max,
     }, sender, password, receiver=receiver, server=server, title=title % ('%s %s' % (course.id, course.name)), file='src/bykc_notice.html')
