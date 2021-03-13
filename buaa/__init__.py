@@ -194,7 +194,10 @@ class bykc(login):
         def __init__(self, data):
             self.id = data['id']
             self.data = data
-            self.campus = json.loads(data['courseCampus'])
+            try:
+                self.campus = json.loads(data['courseCampus'])
+            except:
+                self.campus = [data['courseCampus']]
             self.college = data['courseCollege']
             self.provider = data['courseContact']
             self.current = data['courseCurrentCount']
