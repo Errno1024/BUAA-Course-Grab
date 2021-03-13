@@ -206,4 +206,4 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except Exception as e: raise#print(f'{e.__class__.__qualname__}: {str(e)}')
+    except Exception as e: print(f'{e.__class__.__qualname__}: {str(e)}')
