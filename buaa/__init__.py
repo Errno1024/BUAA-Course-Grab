@@ -363,8 +363,8 @@ class jwxt(login):
     @property
     def weburl(self):
         if self.token and self.token.type is not None:
-            return f'https://jwxt-7001.e{self.token.type}.buaa.edu.cn'
-        return 'http://jwxt.buaa.edu.cn:7001'
+            return f'https://jwxt-8081.e{self.token.type}.buaa.edu.cn'
+        return 'http://jwxt.buaa.edu.cn:8081'
 
     @property
     def loginurl(self):
