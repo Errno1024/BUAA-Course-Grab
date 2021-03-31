@@ -156,9 +156,9 @@ def main():
                 if res:
                     print(f'Successfully enrolled in {e}.')
                     if to_send:
-                        e_name = str(e)
                         try:
-                            mail_res = buaa.remind(e_name, sender, password, receiver, server, title=f'Reminder: BYKC-{e}')
+                            course = b.detail(e)
+                            mail_res = buaa.bykc_notice(course, sender, password, receiver, server)
                             if not mail_res: print('Failed to send reminder message.')
                         except: print('Failed to send reminder message.')
                 else:
@@ -186,7 +186,7 @@ def main():
                         print('Failed to send notice.')
 
         if args.time is None:
-            if not args.list:
+            if not args.list and elist:
                 enroll()
         else:
             if args.continuous > 1 and args.list:

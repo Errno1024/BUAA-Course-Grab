@@ -702,7 +702,7 @@ def mail(args, sender, password, receiver=None, server=None, title='Reminder', f
 def remind(course_detail, sender, password, receiver=None, server=None, title='Reminder'):
     return mail({'course_detail': course_detail}, sender, password, receiver=receiver, server=server, title=title, file='src/reminder.html')
 
-def bykc_notice(course: bykc.course, sender, password, receiver=None, server=None, title='BYKC Notice: %s'):
+def bykc_notice(course: bykc.course, sender, password, receiver=None, server=None, title='BYKC Notice: Enrolled in %s'):
     return mail({
         'course_id': course.id,
         'course_name': course.name,
