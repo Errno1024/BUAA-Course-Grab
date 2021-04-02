@@ -191,6 +191,9 @@ timetable_all_re = re.compile(
 
 class bykc(login):
     class course:
+        RE_POS_SHAHE = r'(?:(?:J|S|教|实|实验楼)[0-5]|沙河|咏曼)'
+        RE_POS_XUEYUANROAD = r'(?:[A-H][0-9]{3,4}|学院路|学术交流厅|主|[(（][1-5一二三四五][)）]|^体育场)'
+
         def __init__(self, data):
             self.id = data['id']
             self.data = data
@@ -210,6 +213,14 @@ class bykc(login):
             self.end = date(data['courseEndDate'])
             self.classroom = data['coursePosition']
             self.desc = data.get('courseDesc', None)
+
+        @property
+        def position(self):
+            if re.search(self.RE_POS_SHAHE, self.classroom):
+                return 's'
+            if re.search(self.RE_POS_XUEYUANROAD, self.classroom):
+                return 'x'
+            return 'x'
 
         def __str__(self):
             return \

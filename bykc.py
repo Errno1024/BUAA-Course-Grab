@@ -33,6 +33,11 @@ parser.add_argument('-C', '--continuous', action='count',
                          'messages will be sent.')
 parser.add_argument('-n', '--number', default=None, type=int, metavar='amount',
                     help='The amount of courses to be enrolled.')
+parser.add_argument('-p', '--position', default=None, type=str, metavar='sx',
+                    help='The desired campus. \'s\' refers to Shahe, and \'x\' refers to Xueyuanroad. Choices'
+                         ' can be combined like \'sx\'. This option is only active when -l and -t are passed. '
+                         'It\'s worth notice that since campus is inferred by classroom name, mistakes '
+                         'might happen.')
 parser.add_argument('-s', '--safe', nargs='?', default=NotImplemented, type=int, metavar='time',
                     help='Safe mode. When this switch is on, the script will never attempt to enroll in a course '
                          'in conflict with regular course timetable. If time is specified, a travel time is taken into '
@@ -76,12 +81,20 @@ def main():
             if args.safe:
                 safe_span = datetime.timedelta(minutes=max(args.safe, 0))
 
+        position = args.position
+
         def available_list():
-            nonlocal safety_list, safe_span
+            nonlocal safety_list, safe_span, position
             sel = b.selectable
             course_list = set(sel.keys())
             chosen = set(b.chosen.keys())
             res = course_list.difference(chosen)
+            if position is not None:
+                _res = []
+                for c in res:
+                    if sel[c].position in position:
+                        _res.append(c)
+                res = _res
             if safety_list:
                 _res = []
                 for c in res:
@@ -89,7 +102,7 @@ def main():
                     dt = sel[c].end - d
                     if buaa.jwxt._schedule_available(d, dt, safety_list, safe_span):
                         _res.append(c)
-                return _res
+                res = _res
             return list(res)
 
         if args.forecast:
