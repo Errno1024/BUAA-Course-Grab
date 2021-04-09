@@ -26,7 +26,7 @@ parser.add_argument('-d', '--drop', nargs='*', default=[], metavar='id', type=in
 parser.add_argument('-t', '--time', default=None, type=float, metavar='interval',
                     help='The interval between tries of enrolling. When this option is set, the script will continue '
                          'trying until all targets are enrolled in.')
-parser.add_argument('-C', '--continuous', action='count',
+parser.add_argument('-C', '--continuous', action='count', default=0,
                     help='If this switch is on, the script will continuously attempt to enroll in courses available. '
                          'If this switch is used twice with -l and -t, the script will automatically output notice '
                          'when new courses become selectable instead of enrolling; if -m is also passed, notice '
