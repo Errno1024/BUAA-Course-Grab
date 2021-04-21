@@ -20,7 +20,9 @@ parser.add_argument('-c', '--chosen', action='store_true',
                     help='To show courses already enrolled in. If this switch is used with -l or --list, courses not '
                          'enrolled in will be showed.')
 parser.add_argument('-f', '--forecast', action='store_true',
-                    help='To show courses in the forecast list.')
+                    help='To show courses in the forecast list. If -f is used with -l, courses in the forecast list '
+                         'will also be grabbed. The software provider assumes NO liability for any behavior that '
+                         'breaks rules.')
 parser.add_argument('-d', '--drop', nargs='*', default=[], metavar='id', type=int,
                     help='The IDs of courses to drop.')
 parser.add_argument('-t', '--time', default=None, type=float, metavar='interval',
@@ -82,10 +84,13 @@ def main():
                 safe_span = datetime.timedelta(minutes=max(args.safe, 0))
 
         position = args.position
+        is_forecast = args.forecast
 
         def available_list():
-            nonlocal safety_list, safe_span, position
+            nonlocal safety_list, safe_span, position, is_forecast
             sel = b.selectable
+            if is_forecast:
+                sel.update(b.forecast)
             course_list = set(sel.keys())
             chosen = set(b.chosen.keys())
             res = course_list.difference(chosen)
