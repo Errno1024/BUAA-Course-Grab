@@ -17,7 +17,7 @@ try:
     def show_image(stream, title=None):
         img = cv2.imdecode(np.frombuffer(stream, np.uint8), cv2.IMREAD_ANYCOLOR)
         cv2.imshow('' if title is None else title, img)
-        cv2.waitKey(0)
+        while cv2.waitKey(0) != -1: pass
 except ModuleNotFoundError:
     from PIL import Image
     import io
