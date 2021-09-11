@@ -4,6 +4,27 @@ import json
 import time
 import datetime
 import smtp
+import numpy as np
+
+try:
+    import _thread as thread
+except:
+    import thread
+
+try:
+    import cv2
+
+    def show_image(stream, title=None):
+        img = cv2.imdecode(np.frombuffer(stream, np.uint8), cv2.IMREAD_ANYCOLOR)
+        cv2.imshow('' if title is None else title, img)
+        cv2.waitKey(0)
+except ModuleNotFoundError:
+    from PIL import Image
+    import io
+
+    def show_image(stream, title=None):
+        img = Image.open(io.BytesIO(stream))
+        img.show()
 
 from . import urllib3
 
@@ -69,6 +90,8 @@ def params(url):
     return res
 
 class CASTGC:
+    re_cas_captcha_id = re.compile(r"config.captcha\s*=\s*{\s*type:\s*'image',\s*id:\s*'(-?[0-9]+)'")
+
     def __init__(self, username, password, type=None, refresh=False):
         self.username = username
         self.password = password
@@ -76,10 +99,23 @@ class CASTGC:
         if refresh:
             self.refresh()
 
-    def refresh(self):
-        login_url = 'https://sso.buaa.edu.cn/login'
+    @property
+    def base_url(self):
         if self.type is not None:
-            login_url = f'https://sso-443.e{self.type}.buaa.edu.cn/login'
+            return f'https://sso-443.e{self.type}.buaa.edu.cn'
+        return 'https://sso.buaa.edu.cn'
+
+    @property
+    def login_url(self):
+        return f'{self.base_url}/login'
+
+    @property
+    def captcha_url(self):
+        return f'{self.base_url}/captcha?captchaId='
+
+    def refresh(self):
+        login_url = self.login_url
+        captcha_url = self.captcha_url
         execution_re = re.compile(r'name="execution" value="([^"]*)"')
         headers = {
             'Connection': 'keep-alive',
@@ -102,14 +138,34 @@ class CASTGC:
         }
 
         ck = '; '.join(map(lambda x: f"{x[0]}={x[1]}", _cookies.get_dict().items()))
-        res = requests.post(login_url, data=data, headers={
-            'Cookie': ck,
-            **headers,
-        }, files=[], allow_redirects=False)
-        _CASTGC = res.cookies.get('CASTGC')
+
+        _CASTGC = None
+        while _CASTGC is None:
+            captcha_id = re.search(self.re_cas_captcha_id, content)
+            if captcha_id is not None:
+                captcha_id = captcha_id.group(1)
+                captcha_pic = requests.get(f'{captcha_url}{captcha_id}', headers={
+                    'Cookie': ck,
+                    **headers,
+                }).content
+                thread.start_new(show_image, (captcha_pic, 'Captcha'))
+
+                captcha_answer = input('Input captcha: ')
+                data['captcha'] = captcha_answer
+
+            res = requests.post(login_url, data=data, headers={
+                'Cookie': ck,
+                **headers,
+            }, files=[], allow_redirects=False)
+            _CASTGC = res.cookies.get('CASTGC')
+
+            if _CASTGC is None:
+                # TODO: Sometimes CAS will refuse all attempts even if refreshed,
+                #       and the cause is still unclear.
+                raise BUAAException('Connection refused, please retry after a few seconds')
+
         self.token = _CASTGC
         self.execution = execution
-        self.login_url = login_url
         self.headers = headers
         self.data = data
 
