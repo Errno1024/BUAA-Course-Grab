@@ -91,6 +91,14 @@ def params(url):
 
 class CASTGC:
     re_cas_captcha_id = re.compile(r"config.captcha\s*=\s*{\s*type:\s*'image',\s*id:\s*'(-?[0-9]+)'")
+    re_webvpn_csrf_token = re.compile(r'<meta\s*name="csrf-token"\s*content="([A-Za-z0-9/=+-]+)"')
+    re_execution = re.compile(r'name="execution" value="([^"]*)"')
+    headers = {
+        'Connection': 'keep-alive',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip, deflate, br',
+    }
 
     def __init__(self, username, password, type=None, refresh=False):
         self.username = username
@@ -98,6 +106,16 @@ class CASTGC:
         self.type = type
         if refresh:
             self.refresh()
+
+    @property
+    def vpn(self):
+        return self.type is not None
+
+    @property
+    def vpn_login_url(self):
+        if self.type is None:
+            return None
+        return f'https://e{self.type}.buaa.edu.cn/users/sign_in'
 
     @property
     def base_url(self):
@@ -113,21 +131,44 @@ class CASTGC:
     def captcha_url(self):
         return f'{self.base_url}/captcha?captchaId='
 
+    def refresh_webvpn(self):
+        if not self.vpn:
+            return
+        login_url = self.vpn_login_url
+        res = requests.get(login_url, headers=self.headers)
+        _cookies = res.cookies
+        content = res.content.decode('utf8')
+        csrf_token = re.search(self.re_webvpn_csrf_token, content).group(1)
+
+        data = {
+            'utf8': "✓",
+            'user[login]': self.username,
+            'user[password]': self.password,
+            'user[dymatice_code]': 'unknown',
+            'user[otp_with_capcha]': 'false',
+            'authenticity_token': csrf_token,
+        }
+
+        ck = '; '.join(map(lambda x: f"{x[0]}={x[1]}", _cookies.get_dict().items()))
+        res = requests.post(login_url, data=data, headers={
+            'Cookie': ck,
+            **self.headers,
+        }, files=[])
+        self.vpn_cookies = {}
+        for r in res.history:
+            self.vpn_cookies.update(r.cookies.get_dict())
+
+
     def refresh(self):
         login_url = self.login_url
         captcha_url = self.captcha_url
-        execution_re = re.compile(r'name="execution" value="([^"]*)"')
-        headers = {
-            'Connection': 'keep-alive',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
-            'Accept': '*/*',
-            'Accept-Encoding': 'gzip, deflate, br',
-        }
+
+        headers = self.headers
 
         res = requests.get(login_url, headers=headers)
         _cookies = res.cookies
         content = res.content.decode('utf8')
-        execution = re.search(execution_re, content).group(1)
+        execution = re.search(self.re_execution, content).group(1)
 
         data = {
             'username': self.username,
@@ -169,6 +210,8 @@ class CASTGC:
         self.headers = headers
         self.data = data
 
+        self.vpn_cookies = {}
+        self.refresh_webvpn()
 
 class login:
     def __init__(self, url, token):
@@ -182,13 +225,16 @@ class login:
         res = requests.post(
             url,
             data=token.data,
-            cookies={'CASTGC': token.token},
+            cookies={
+                'CASTGC': token.token,
+                **token.vpn_cookies,
+            },
             headers={
                 **token.headers,
             },
             files=[],
         )
-        cookies = {}
+        cookies = {**token.vpn_cookies}
         for his in res.history[1:]:
             cookies.update(his.cookies.get_dict())
         self.url = res.url

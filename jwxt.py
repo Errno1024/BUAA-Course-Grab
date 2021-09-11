@@ -28,7 +28,7 @@ parser.add_argument('-e', '--export', nargs='?', default=..., type=str, metavar=
 parser.add_argument('-T', '--type', default=None, type=str, metavar='JC | TS | ZY',
                     help='The course type, which is inferred from course ID if not provided. JC for fundamental courses'
                          ', TS for general courses, and ZY for professional courses.')
-#parser.add_argument('-V', '--vpn', default=None, type=str, help='The index of VPN used.')
+parser.add_argument('-V', '--vpn', default=None, type=str, help='The index of VPN used.')
 parser.add_argument('-d', '--drop', action='store_true',
                     help='Whether to drop the course.')
 parser.add_argument('-t', '--time', default=None, type=float, metavar='interval',

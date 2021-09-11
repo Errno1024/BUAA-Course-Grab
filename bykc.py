@@ -12,7 +12,7 @@ parser.add_argument('-h', '--help', action='help', help='To show help.')
 parser.add_argument('username', help='The unified identity authentication account.')
 parser.add_argument('password', help='Password of the account.')
 parser.add_argument('enroll', nargs='*', type=int, default=[], help='The IDs of courses to enroll.')
-#parser.add_argument('-V', '--vpn', default=None, type=str, help='The index of VPN used.')
+parser.add_argument('-V', '--vpn', default=None, type=str, help='The index of VPN used.')
 parser.add_argument('-l', '--list', action='store_true',
                     help='To show course list. If this switch is used with -t or --time, the target list will be '
                          'ignored and replaced by course list.')
