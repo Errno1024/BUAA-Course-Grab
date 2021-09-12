@@ -64,6 +64,12 @@ python bykc.py username password -lt 1 -n 3
 python bykc.py username password -lt 1 -n 3 -m demo@gmail.com demopassword
 ```
 
+To use VPN, pass `-V` and specify the index of VPN to use.
+
+```shell
+python bykc.py usename password -lt 1 -n 3 -V 2
+```
+
 ### JWXT
 
 `jwxt.py` is the Course Grab tool for educational administration system (aka. JWXT). 
@@ -106,3 +112,8 @@ The mail reminder service is identical to `bykc.py`.
 python jwxt.py username password course -t 1 -m demo@gmail.com demopassword
 ```
 
+`jwxt.py` also provides `-V` to specify VPN.
+
+```shell
+python jwxt.py username password course -V 1
+```
