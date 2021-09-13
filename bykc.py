@@ -40,7 +40,7 @@ parser.add_argument('-p', '--position', default=None, type=str, metavar='sx',
                          ' can be combined like \'sx\'. This option is only active when -l and -t are passed. '
                          'It\'s worth notice that since campus is inferred by classroom name, mistakes '
                          'might happen.')
-parser.add_argument('-s', '--safe', nargs='?', default=NotImplemented, type=int, metavar='time',
+parser.add_argument('-s', '--safe', nargs='?', default=NotImplemented, type=float, metavar='time',
                     help='Safe mode. When this switch is on, the script will never attempt to enroll in a course '
                          'in conflict with regular course timetable. If time is specified, a travel time is taken into '
                          'consideration, ensuring safety of a higher level. The default estimated travel time is '

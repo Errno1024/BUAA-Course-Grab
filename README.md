@@ -64,10 +64,28 @@ python bykc.py username password -lt 1 -n 3
 python bykc.py username password -lt 1 -n 3 -m demo@gmail.com demopassword
 ```
 
+`bykc.py` can select desired campus. Using `-p`, `bykc.py` will ignore courses not in chosen campus. `s` refers to Shahe, and `x` refers to Xueyuanroad.
+
+```shell
+python bykc.py username password -lt 1 -n 3 -p x
+```
+
+Another switch, `-s`, also control whether to enroll in a course. Using `-s`, `bykc.py` will never attempt to enroll in a course in conflict with regular course timetable. A time can be specified as default travel time between campuses. The time is `60` by default.
+
+```shell
+python bykc.py username password -lt 1 -n 3 -s 60
+```
+
 To use VPN, pass `-V` and specify the index of VPN to use.
 
 ```shell
 python bykc.py usename password -lt 1 -n 3 -V 2
+```
+
+Recommended argument combination:
+
+```shell
+python bykc.py username password -Cfslt 1 [-V 1 | 2] [-p s | x | sx] [-m demo@gmail.com demopassword]
 ```
 
 ### JWXT
