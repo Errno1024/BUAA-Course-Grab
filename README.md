@@ -20,7 +20,7 @@ To see help, type following commands in your console:
 python bykc.py --help
 ```
 
-`bykc.py` provides a convenient way to enroll or drop courses. While `username` refers to your universal identity authentication account and `password` refers to your password, following command shows you the current course list.
+`bykc.py` provides a convenient way to enroll in or drop courses. While `username` refers to your universal identity authentication account and `password` refers to your password, following command shows you the current course list.
 
 ```sh
 python bykc.py username password -l
@@ -70,7 +70,7 @@ python bykc.py username password -lt 1 -n 3 -m demo@gmail.com demopassword
 python bykc.py username password -lt 1 -n 3 -p x
 ```
 
-Another switch, `-s`, also control whether to enroll in a course. Using `-s`, `bykc.py` will never attempt to enroll in a course in conflict with regular course timetable. A time can be specified as default travel time between campuses. The time is `60` by default.
+Another switch, `-s`, also controls whether to enroll in a course. Using `-s`, `bykc.py` will never attempt to enroll in a course in conflict with regular course timetable. A time can be specified as default travel time between campuses. The time is `60` by default.
 
 ```shell
 python bykc.py username password -lt 1 -n 3 -s 60
@@ -98,7 +98,7 @@ To see help, type following commands in your console:
 python jwxt.py --help
 ```
 
-Like `bykc.py`, `jwxt.py` provides a convenient way to enroll or drop a course. Following command attempts to enroll in a course, where `course` indicates the course ID (e.g.: B3I062410), and `rank` (e.g. 001) indicates the order of course in the system, since there may be a number of courses share the same ID. `rank` is an optional argument.
+Like `bykc.py`, `jwxt.py` provides a convenient way to enroll in or drop a course. Following command attempts to enroll in a course, where `course` indicates the course ID (e.g.: B3I062410), and `rank` (e.g. 001) indicates the order of course in the system, since there may be a number of courses share the same ID. `rank` is an optional argument.
 
 ```sh
 python jwxt.py username password course [rank]
@@ -118,7 +118,7 @@ By default, `-y` and `-s` are assigned with current year and semester respective
 python jwxt.py username password course -y 2000 -s 1
 ```
 
-Like `bykc.py`, `jwxt.py` provides identical way to continuously attempt to enroll a specific course.
+Like `bykc.py`, `jwxt.py` provides identical way to continuously attempt to enroll in a specific course.
 
 ```sh
 python jwxt.py username password course -t 1
