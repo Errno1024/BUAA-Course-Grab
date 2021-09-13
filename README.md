@@ -26,7 +26,13 @@ python bykc.py --help
 python bykc.py username password -l
 ```
 
-Among arguments, `-d` switch indicates removing courses of following IDs (`course1`, `course2`, ..., `courseN`) simultaneously.
+`bykc.py` also provides a way to show your chosen or not chosen courses. Using switch `-c` to show chosen courses, and to show courses not chosen when `-l` is also passed.
+
+```sh
+python bykc.py username password -l
+```
+
+Among arguments, switch `-d` indicates removing courses of following IDs (`course1`, `course2`, ..., `courseN`) simultaneously.
 
 ```sh
 python bykc.py username password -d course1 course2 ... courseN
@@ -66,25 +72,25 @@ python bykc.py username password -lt 1 -n 3 -m demo@gmail.com demopassword
 
 `bykc.py` can select desired campus. Using `-p`, `bykc.py` will ignore courses not in chosen campus. `s` refers to Shahe, and `x` refers to Xueyuanroad.
 
-```shell
+```sh
 python bykc.py username password -lt 1 -n 3 -p x
 ```
 
 Another switch, `-s`, also controls whether to enroll in a course. Using `-s`, `bykc.py` will never attempt to enroll in a course in conflict with regular course timetable. A time can be specified as default travel time between campuses. The time is `60` by default.
 
-```shell
+```sh
 python bykc.py username password -lt 1 -n 3 -s 60
 ```
 
 To use VPN, pass `-V` and specify the index of VPN to use.
 
-```shell
+```sh
 python bykc.py usename password -lt 1 -n 3 -V 2
 ```
 
 Recommended argument combination:
 
-```shell
+```sh
 python bykc.py username password -Cfslt 1 [-V 1 | 2] [-p s | x | sx] [-m demo@gmail.com demopassword]
 ```
 
@@ -132,6 +138,6 @@ python jwxt.py username password course -t 1 -m demo@gmail.com demopassword
 
 `jwxt.py` also provides `-V` to specify VPN.
 
-```shell
+```sh
 python jwxt.py username password course -V 1
 ```
