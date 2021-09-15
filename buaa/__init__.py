@@ -131,6 +131,10 @@ class CASTGC:
     def captcha_url(self):
         return f'{self.base_url}/captcha?captchaId='
 
+    @property
+    def app_url(self):
+        return 'https://app.buaa.edu.cn/uc/wap/login'
+
     def refresh_webvpn(self):
         if not self.vpn:
             return
@@ -158,6 +162,17 @@ class CASTGC:
         for r in res.history:
             self.vpn_cookies.update(r.cookies.get_dict())
 
+    def refresh_app(self):
+        data = {
+            'username': self.username,
+            'password': self.password,
+        }
+        res = requests.post(f'{self.app_url}/check', data=data, headers=self.headers)
+        res_data = json.loads(res.content.decode('utf8'))
+        suc = res_data['e'] == 0
+        if not suc:
+            raise BUAAException(f'Login error: {res_data.get("m", "Unknown Error")}')
+        self.app_cookies = res.cookies.get_dict()
 
     def refresh(self):
         login_url = self.login_url
@@ -207,11 +222,13 @@ class CASTGC:
 
         self.token = _CASTGC
         self.execution = execution
-        self.headers = headers
         self.data = data
 
         self.vpn_cookies = {}
         self.refresh_webvpn()
+
+        self.app_cookies = {}
+        self.refresh_app()
 
 class login:
     def __init__(self, url, token):
@@ -234,7 +251,7 @@ class login:
             },
             files=[],
         )
-        cookies = {**token.vpn_cookies}
+        cookies = {**token.vpn_cookies, **token.app_cookies}
         for his in res.history[1:]:
             cookies.update(his.cookies.get_dict())
         self.url = res.url
