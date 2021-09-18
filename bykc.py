@@ -6,6 +6,7 @@ import datetime
 
 TRAVEL_TIME = 60
 RETRY_LIMIT = 128
+DEFAULT_INTERVAL = 1
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='help', help='To show help.')
@@ -55,9 +56,20 @@ parser.add_argument('-r', '--receiver', type=str, default=None, metavar='receive
 parser.add_argument('-R', '--retry', type=int, default=RETRY_LIMIT, metavar='limit',
                     help='The retry limit. The script will automatically retry when connection is aborted unexpectedly'
                         f'. The default retry limit is {RETRY_LIMIT}.')
+parser.add_argument('--default', action='store_true',
+                    help=f'The recommended default settings. This switch is synonymous with `-C -f -l -t '
+                         f'{DEFAULT_INTERVAL} -s {TRAVEL_TIME}`.')
+
 
 def main():
     args = parser.parse_args()
+
+    if args.default:
+        setattr(args, 'continuous', getattr(args, 'continuous', 0) + 1)
+        setattr(args, 'forecast', True)
+        setattr(args, 'list', True)
+        setattr(args, 'time', DEFAULT_INTERVAL)
+        setattr(args, 'safe', TRAVEL_TIME)
 
     try:
         vpn = getattr(args, 'vpn', None)

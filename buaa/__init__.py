@@ -228,7 +228,7 @@ class CASTGC:
         self.refresh_webvpn()
 
         self.app_cookies = {}
-        self.refresh_app()
+        #self.refresh_app()
 
 class login:
     def __init__(self, url, token):

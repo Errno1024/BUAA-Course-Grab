@@ -29,7 +29,7 @@ python bykc.py username password -l
 `bykc.py` also provides a way to show your chosen or not chosen courses. Using switch `-c` to show chosen courses, and to show courses not chosen when `-l` is also passed.
 
 ```sh
-python bykc.py username password -l
+python bykc.py username password -cl
 ```
 
 Among arguments, switch `-d` indicates removing courses of following IDs (`course1`, `course2`, ..., `courseN`) simultaneously.
@@ -92,6 +92,12 @@ Recommended argument combination:
 
 ```sh
 python bykc.py username password -Cflt 1 -s 60 [-V 1 | 2] [-p s | x | sx] [-m demo@gmail.com demopassword]
+```
+
+The combination above has identical effect to the following instruction, which uses the default settings.
+
+```sh
+python bykc.py username password --default [-V 1 | 2] [-p s | x | sx] [-m demo@gmail.com demopassword]
 ```
 
 ### JWXT
