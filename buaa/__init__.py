@@ -218,7 +218,9 @@ class CASTGC:
             if _CASTGC is None:
                 # TODO: Sometimes CAS will refuse all attempts even if refreshed,
                 #       and the cause is still unclear.
-                raise BUAAException('Connection refused, please retry after a few seconds')
+                raise BUAAException('Connection refused, please retry after a few seconds. '
+                                    'Please note that account with a weak password might be '
+                                    'forbidden to access sso.buaa.edu.cn.')
 
         self.token = _CASTGC
         self.execution = execution
