@@ -6,6 +6,8 @@ import datetime
 import smtp
 import numpy as np
 
+from . import bykc_encrypt
+
 try:
     import _thread as thread
 except:
@@ -384,28 +386,65 @@ class bykc(login):
     def query(self, name, default=None):
         if default is None: default = []
         try:
-            return json.loads(self.get(f'{self.weburl}/sscv/{name}').content).get('data', default)
+            res = self.__encrypted_api(name)
+            if res is None:
+                res = default
+            return res
         except:
             self.refresh()
-        return json.loads(self.get(f'{self.weburl}/sscv/{name}').content).get('data', [])
+        res = self.__encrypted_api(name)
+        if res is None:
+            res = default
+        return res
+
+    def __encrypted_api(self, name, payload=None):
+        if payload is None:
+            payload = {}
+
+        raw_data = json.dumps(payload)
+        #raw_data = json.dumps(payload, ensure_ascii=True)
+
+        raw_data_bytes = raw_data.encode('utf8')
+        aes_key = bykc_encrypt.generate_aes_key()
+        data_sign = bykc_encrypt.sign(raw_data_bytes)
+        timestamp = int(time.time() * 1000)
+        headers = {
+            'Content-Type': 'application/json;charset=UTF-8',
+            'ak': bykc_encrypt.rsa_encrypt(aes_key).decode('utf8'),
+            'sk': bykc_encrypt.rsa_encrypt(data_sign).decode('utf8'),
+            'ts': str(timestamp),
+        }
+
+        encrypted_data = bykc_encrypt.b64encode(bykc_encrypt.aes_encrypt(raw_data_bytes, aes_key))
+        res = self.post(
+            f'{self.weburl}/sscv/{name}',
+            data=encrypted_data,
+            headers=headers,
+        )
+        if res.status_code < 200 or res.status_code >= 300:
+            raise BUAAException(f'API {name} returns error status code {res.status_code} with content: {res.content}')
+
+        content = res.content
+        try:
+            content = bykc_encrypt.b64decode(content)
+        except ValueError:
+            # The response is not base64 format, which indicates the content is raw text with error status code
+            res_decode = json.loads(content)
+            status = res_decode.get('status', None)
+            raise BUAAException(f'API {name} returns error status {status} with data {res_decode.get("data", None)}')
+        res_decode = json.loads(bykc_encrypt.aes_decrypt(content, aes_key))
+        status = res_decode.get('status', None)
+        if status != '0':
+            raise BUAAException(f'API {name} returns error status {status} with data {res_decode.get("data", None)}')
+        return res_decode.get('data', None)
 
     def api(self, name, payload=None):
         if payload is None: payload = {}
         try:
-            return json.loads(self.post(
-                f'{self.weburl}/sscv/{name}',
-                data=json.dumps(payload, ensure_ascii=True),
-                headers={'Content-Type': 'application/json;charset=UTF-8'},
-            ).content,
-                              ).get('data', None)
+            return self.__encrypted_api(name=name, payload=payload)
         except:
             self.refresh()
-        return json.loads(self.post(
-            f'{self.weburl}/sscv/{name}',
-            data=json.dumps(payload, ensure_ascii=True),
-            headers={'Content-Type': 'application/json;charset=UTF-8'},
-        ).content,
-                          ).get('data', None)
+        return self.__encrypted_api(name=name, payload=payload)
 
     def courses(self, data):
         res = {}
@@ -471,13 +510,25 @@ class bykc(login):
         if res is None: raise BUAAException('Failed to get course detail')
         return self.course(res)
 
-    def enroll(self, id):
-        res = self.api('choseCourse', {'courseId': id})
+    def enroll(self, id, throw=False):
+        if not throw:
+            try:
+                res = self.api('choseCourse', {'courseId': id})
+            except:
+                res = None
+        else:
+            res = self.api('choseCourse', {'courseId': id})
         if res is None: return False
         return id in self.chosen
 
-    def drop(self, id):
-        res = self.api('delChosenCourse', {'id': id})
+    def drop(self, id, throw=False):
+        if not throw:
+            try:
+                res = self.api('delChosenCourse', {'id': id})
+            except:
+                res = None
+        else:
+            res = self.api('delChosenCourse', {'id': id})
         if res is None: return False
         return id not in self.chosen
 
