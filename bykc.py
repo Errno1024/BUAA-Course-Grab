@@ -6,7 +6,7 @@ import datetime
 import json
 
 TRAVEL_TIME = 60
-RETRY_LIMIT = 128
+RETRY_LIMIT = 32
 DEFAULT_INTERVAL = 1
 SCAN_INTERVAL = 60  # seconds
 
@@ -107,6 +107,8 @@ def main():
             for e in range(min_, max_):
                 try:
                     detail = b.detail(e)
+                except buaa.BUAAException:
+                    continue
                 except json.decoder.JSONDecodeError:
                     continue
                 start_time = detail.start
@@ -165,8 +167,9 @@ def main():
         ch = b.chosen
 
         if args.list:
+            sel = b.selectable
             if args.chosen:
-                course_list = set(b.selectable.keys())
+                course_list = set(sel.keys())
                 chosen = set(ch.keys())
                 available = course_list.difference(chosen)
                 if available:
@@ -176,7 +179,6 @@ def main():
                 else:
                     print('No available course.')
             else:
-                sel = b.selectable
                 if sel:
                     for _, v in sel.items():
                         print(v, end='')

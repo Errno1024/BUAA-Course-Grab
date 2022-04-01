@@ -30,7 +30,10 @@ except ModuleNotFoundError:
 
 from . import urllib3
 
-class BUAAException(Exception): pass
+class BUAAException(Exception):
+    def __init__(self, *args, status=None):
+        super().__init__(*args)
+        self.status = status
 
 def _binary_search(v, lst, key=None):
     if not lst: return 0
@@ -391,7 +394,7 @@ class bykc(login):
     def headers(self):
         return {'auth_token': self.bykc_token, **super().headers}
 
-    def query(self, name, default=None):
+    def query(self, name, default=None, throw=False):
         if default is None: default = []
         try:
             res = self.__encrypted_api(name)
@@ -400,7 +403,12 @@ class bykc(login):
             return res
         except:
             self.refresh()
-        res = self.__encrypted_api(name)
+        try:
+            res = self.__encrypted_api(name)
+        except:
+            if throw:
+                raise
+            res = None
         if res is None:
             res = default
         return res
@@ -439,11 +447,14 @@ class bykc(login):
             # The response is not base64 format, which indicates the content is raw text with error status code
             res_decode = json.loads(content)
             status = res_decode.get('status', None)
-            raise BUAAException(f'API {name} returns error status {status} with data {res_decode.get("data", None)}')
-        res_decode = json.loads(bykc_encrypt.aes_decrypt(content, aes_key))
+            raise BUAAException(f'API {name} returns error status {status} with data {res_decode.get("data", None)}', status=status)
+        try:
+            res_decode = json.loads(bykc_encrypt.aes_decrypt(content, aes_key))
+        except ValueError:
+            raise BUAAException(f'API {name} returns invalid data {content}')
         status = res_decode.get('status', None)
         if status != '0':
-            raise BUAAException(f'API {name} returns error status {status} with data {res_decode.get("data", None)}')
+            raise BUAAException(f'API {name} returns error status {status} with data {res_decode.get("data", None)}', status=status)
         return res_decode.get('data', None)
 
     def api(self, name, payload=None):
@@ -510,33 +521,38 @@ class bykc(login):
                 _res.append(cc)
         return self.courses(_res)
 
-    def detail(self, id):
+    def detail(self, id, throw=False):
         res = None
         for _ in range(self.retry_limit + 1):
-            res = self.api('queryCourseById', {'id': id})
+            try:
+                res = self.api('queryCourseById', {'id': id})
+            except BUAAException as e:
+                res = None
+                if e.status == '1':
+                    break
+                if throw:
+                    raise
             if res is not None: break
         if res is None: raise BUAAException('Failed to get course detail')
         return self.course(res)
 
     def enroll(self, id, throw=False):
-        if not throw:
-            try:
-                res = self.api('choseCourse', {'courseId': id})
-            except:
-                res = None
-        else:
+        try:
             res = self.api('choseCourse', {'courseId': id})
+        except:
+            if throw:
+                raise
+            res = None
         if res is None: return False
         return id in self.chosen
 
     def drop(self, id, throw=False):
-        if not throw:
-            try:
-                res = self.api('delChosenCourse', {'id': id})
-            except:
-                res = None
-        else:
+        try:
             res = self.api('delChosenCourse', {'id': id})
+        except:
+            if throw:
+                raise
+            res = None
         if res is None: return False
         return id not in self.chosen
 
