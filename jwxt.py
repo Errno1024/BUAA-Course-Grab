@@ -48,7 +48,8 @@ parser.add_argument('-r', '--receiver', type=str, default=None, metavar='receive
                     help='The receiver of the reminder. The reminder will be sent to the sender account if not given.')
 parser.add_argument('-R', '--retry', type=int, default=RETRY_LIMIT, metavar='limit',
                     help='The retry limit. The script will automatically retry when connection is aborted unexpectedly'
-                        f'. The default retry limit is {RETRY_LIMIT}.')
+                         f'. The default retry limit is {RETRY_LIMIT}.')
+
 
 def main():
     args = parser.parse_args()
@@ -87,7 +88,7 @@ def main():
         course = args.course.upper()
 
         typ = args.type
-        if not typ in ('JC', 'TS', 'ZY'):
+        if typ not in ('JC', 'TS', 'ZY'):
             typ = jwxt.course_type(course[2] if len(course) >= 3 else 'I')
 
         rank = args.rank
@@ -95,7 +96,7 @@ def main():
             rank = '001'
         else:
             rank_int = re.search(number_re, rank)
-            if rank_int == None:
+            if rank_int is None:
                 rank = '001-' + rank
             else:
                 rank = ('0' * max(0, 3 - len(rank_int.group(1)))) + rank
@@ -123,13 +124,16 @@ def main():
                         raise
                     if retry_count < retry_limit:
                         print(f'{e.__class__.__qualname__}: {str(e)}')
-                    else: raise
-                else: break
+                    else:
+                        raise
+                else:
+                    break
             if res and to_send:
                 try:
                     mail_res = buaa.remind(course, sender, password, receiver, server, title=f'Reminder: {course}')
                     if not mail_res: print('Failed to send reminder message.')
-                except: print('Failed to send reminder message.')
+                except:
+                    print('Failed to send reminder message.')
             return res
 
         def drop():
@@ -154,10 +158,12 @@ def main():
                     print(f'{count}: Enrolling in {course} failed')
                     time.sleep(args.time)
                 print(f'Successfully enrolled in {course}')
-    except: raise
+    except:
+        raise
+
 
 if __name__ == '__main__':
     try:
         main()
-    except Exception as e: print(f'{e.__class__.__qualname__}: {str(e)}')
-
+    except Exception as e:
+        print(f'{e.__class__.__qualname__}: {str(e)}')

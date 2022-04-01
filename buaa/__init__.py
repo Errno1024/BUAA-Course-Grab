@@ -262,10 +262,18 @@ class login:
         self.cookies = cookies
         self.session = cookies.get('JSESSIONID', None)
 
-    def post(self, *args, cookies={}, headers={}, **kwargs):
+    def post(self, *args, cookies=None, headers=None, **kwargs):
+        if headers is None:
+            headers = {}
+        if cookies is None:
+            cookies = {}
         return requests.post(*args, cookies={**cookies, **self.cookies}, headers={**headers, **self.headers}, **kwargs)
 
-    def get(self, *args, cookies={}, headers={}, **kwargs):
+    def get(self, *args, cookies=None, headers=None, **kwargs):
+        if headers is None:
+            headers = {}
+        if cookies is None:
+            cookies = {}
         return requests.get(*args, cookies={**cookies, **self.cookies}, headers={**headers, **self.headers},
                             **kwargs)
 
@@ -560,7 +568,7 @@ class jwxt(login):
     def __init__(self, *args, **kwargs):
         self.token = CASTGC(*args, **kwargs)
         super().__init__(self.loginurl, self.token)
-        self.__token_re = re.compile('<input type="hidden" id="token" name="token" value="([0-9\.]*)" />')
+        self.__token_re = re.compile('<input type="hidden" id="token" name="token" value="([0-9.]*)" />')
 
     def refresh(self, url=None):
         super().refresh(self.loginurl)
@@ -660,6 +668,10 @@ class jwxt(login):
             'pageXklb': 'xslbxk',
             'pageXnxq': f'{head}{season}',
             'pageKcmc': course_id,
+            'pageNj': '',
+            'pageYxdm': '',
+            'pageZydm': '',
+            'pageBs': '',
         }
         payload = '&'.join(map(lambda x: f"{url_escape(x[0])}={url_escape(x[1])}", data.items()))
         headers = {

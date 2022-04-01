@@ -8,7 +8,7 @@ import json
 TRAVEL_TIME = 60
 RETRY_LIMIT = 128
 DEFAULT_INTERVAL = 1
-SCAN_INTERVAL = 60 # seconds
+SCAN_INTERVAL = 60  # seconds
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='help', help='To show help.')
@@ -47,7 +47,7 @@ parser.add_argument('-s', '--safe', nargs='?', default=NotImplemented, type=floa
                     help='Safe mode. When this switch is on, the script will never attempt to enroll in a course '
                          'in conflict with regular course timetable. If time is specified, a travel time is taken into '
                          'consideration, ensuring safety of a higher level. The default estimated travel time is '
-                        f'{TRAVEL_TIME} (minutes).')
+                         f'{TRAVEL_TIME} (minutes).')
 parser.add_argument('-m', '--mail', nargs=2, default=None, type=str, metavar=('account@example.com', 'password'),
                     help='The mail account applied to send reminder email. Setting an email address indicates sending '
                          'a reminder when a target course is successfully enrolled in.')
@@ -57,7 +57,7 @@ parser.add_argument('-r', '--receiver', type=str, default=None, metavar='receive
                     help='The receiver of the reminder. The reminder will be sent to the sender account if not given.')
 parser.add_argument('-R', '--retry', type=int, default=RETRY_LIMIT, metavar='limit',
                     help='The retry limit. The script will automatically retry when connection is aborted unexpectedly'
-                        f'. The default retry limit is {RETRY_LIMIT}.')
+                         f'. The default retry limit is {RETRY_LIMIT}.')
 parser.add_argument('--scan', default=None, type=int, metavar='span',
                     help=f'The span to scan forward for discovering hidden courses.')
 parser.add_argument('--default', action='store_true',
@@ -137,7 +137,7 @@ def main():
                 course_list.update(scan_res.keys())
                 sel.update(scan_res)
             chosen = set(b.chosen.keys())
-            res : set = course_list.difference(chosen)
+            res: set = course_list.difference(chosen)
             if position is not None:
                 _res = []
                 for c in res:
@@ -198,7 +198,8 @@ def main():
                         if res:
                             print(f'Successfully dropped {d}.')
                             break
-                    except: pass
+                    except:
+                        pass
                     print(f'Failed to drop {d}.' + (' Retrying.' if _ < retry_limit - 1 else ''))
 
         elist = args.enroll
@@ -222,7 +223,8 @@ def main():
                             course = b.detail(e)
                             mail_res = buaa.bykc_notice(course, sender, password, receiver, server)
                             if not mail_res: print('Failed to send reminder message.')
-                        except: print('Failed to send reminder message.')
+                        except:
+                            print('Failed to send reminder message.')
                 else:
                     newlist.append(e)
                     amount += 1
@@ -262,9 +264,12 @@ def main():
                     enroll()
                     time.sleep(args.time)
                 print('Enrolled in all targets')
-    except: raise
+    except:
+        raise
+
 
 if __name__ == '__main__':
     try:
         main()
-    except Exception as e: print(f'{e.__class__.__qualname__}: {str(e)}')
+    except Exception as e:
+        print(f'{e.__class__.__qualname__}: {str(e)}')
