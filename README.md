@@ -2,6 +2,10 @@
 
 *BUAA Course Grab* is intended to be a tool set for BUAA undergraduates to automatically grab or drop courses.
 
+### Hints
+
+- After 2022/03 Boya Subject System update, **frequent refresh** will be detected by the backend and returns **empty** selectable course list. Even manual refresh will trigger this protecting mechanism. If `bykc.py` grabbing frequently shows message such as `No available course.`, please consider using a longer refresh interval.
+
 This tool set has following requirements.
 
 ```

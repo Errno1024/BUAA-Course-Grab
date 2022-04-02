@@ -72,8 +72,10 @@ def main():
         setattr(args, 'continuous', getattr(args, 'continuous', 0) + 1)
         setattr(args, 'forecast', True)
         setattr(args, 'list', True)
-        setattr(args, 'time', DEFAULT_INTERVAL)
-        setattr(args, 'safe', TRAVEL_TIME)
+        if args.time is None:
+            setattr(args, 'time', DEFAULT_INTERVAL)
+        if args.safe is None:
+            setattr(args, 'safe', TRAVEL_TIME)
 
     try:
         vpn = getattr(args, 'vpn', None)
