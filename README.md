@@ -4,7 +4,8 @@
 
 ### Hints
 
-- After 2022/03 Boya Subject System update, **frequent refresh** will be detected by the backend and returns **empty** selectable course list. Even manual refresh will trigger this protecting mechanism. If `bykc.py` grabbing frequently shows message such as `No available course.`, please consider using a longer refresh interval.
+- After 2022/03 Boya Subject System update, the system no longer supports selecting forecast courses and drop history courses.
+- The API sometimes returns empty selectable course list, which indicates one cannot enroll in any course, and the mechanism is still unknown. When an empty list is returned, ANY attempt to enroll will be rejected, returning status code `1`.
 
 This tool set has following requirements.
 
