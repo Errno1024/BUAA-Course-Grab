@@ -1,2 +1,5 @@
+pillow
+opencv-python
+numpy
 cryptography
 requests

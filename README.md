@@ -7,11 +7,12 @@
 - After 2022/03 Boya Subject System update, the system no longer supports selecting forecast courses and drop history courses.
 - The API sometimes returns empty selectable course list, which indicates one cannot enroll in any course, and the mechanism is still unknown. When an empty list is returned, ANY attempt to enroll will be rejected, returning status code `1`.
 
-This tool set has following requirements.
+This tool set has following requirements. PIL or cv2 is used to show captcha when required (generally when using VPN).
 
 ```
 cryptography
 requests
+PIL // or cv2 + numpy
 ```
 
 The tool set contains 2 items at present.

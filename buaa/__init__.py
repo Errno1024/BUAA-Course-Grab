@@ -4,7 +4,6 @@ import json
 import time
 import datetime
 import smtp
-import numpy as np
 
 from . import bykc_encrypt
 
@@ -15,6 +14,7 @@ except:
 
 try:
     import cv2
+    import numpy as np
 
     def show_image(stream, title=None):
         img = cv2.imdecode(np.frombuffer(stream, np.uint8), cv2.IMREAD_ANYCOLOR)
@@ -929,3 +929,15 @@ def bykc_notice(course: bykc.course, sender, password, receiver=None, server=Non
         'description': course.desc if course.desc is not None else '',
         'max': course.max,
     }, sender, password, receiver=receiver, server=server, title=title % ('%s %s' % (course.id, course.name)), file='src/bykc_notice.html')
+
+
+__all__ = [
+    'BUAAException',
+    'CASTGC',
+    'login',
+    'bykc',
+    'jwxt',
+    'mail',
+    'remind',
+    'bykc_notice',
+]

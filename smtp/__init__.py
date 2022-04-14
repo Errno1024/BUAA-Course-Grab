@@ -2,7 +2,7 @@ import smtplib as _smtplib
 from email.mime.multipart import MIMEBase as _mimebase, MIMEMultipart as _mimemulti
 from email.mime.text import MIMEText as _mimetext
 from email.header import Header as _header
-import re
+import re as _re
 
 _smtp_lut = {
 	'263.net.cn': '263.net.cn',
@@ -98,7 +98,7 @@ def mime_from_file(subject, filename, from_=None, to=None, replace={}):
     with open(filename, 'r') as file:
         html = file.read()
     for pattern, dest in re_replacer(replace).items():
-        html = re.sub(pattern, dest, html)
+        html = _re.sub(pattern, dest, html)
     mime = _mimetext(html, 'html', file.encoding)
     mime['Subject'] = _header(subject, 'utf-8')
     mime['From'] = from_
@@ -113,13 +113,16 @@ def mime_html(subject, html, from_=None, to=None):
     return mime
 
 def _re_var_escape(s):
-    return re.sub(r'([\.\*\\\+\^\$\(\)\[\]\|\{\}\?])', '\\\\\\1', s)
+    return _re.sub(r'([\.\*\\\+\^\$\(\)\[\]\|\{\}\?])', '\\\\\\1', s)
 
 def _re_sub_escape(s):
-    return re.sub(r'\\([0-9]+)', '\\\\\\1', s)
+    return _re.sub(r'\\([0-9]+)', '\\\\\\1', s)
 
 def re_replacer(variables):
     res = {}
     for k, v in variables.items():
         res['\\{\\{ *%s *\\}\\}' % _re_var_escape(k)] = _re_sub_escape(str(v))
     return res
+
+
+__all__ = [i for i in globals() if i[0] != '_']
