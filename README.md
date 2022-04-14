@@ -96,7 +96,7 @@ python bykc.py usename password -lt 1 -n 3 -V 2
 Recommended argument combination:
 
 ```sh
-python bykc.py username password -Cflt 1 -s 60 [-V 1 | 2] [-p s | x | sx] [-m demo@gmail.com demopassword]
+python bykc.py username password -Clt 1 -s 60 [-V 1 | 2] [-p s | x | sx] [-m demo@gmail.com demopassword]
 ```
 
 The combination above has identical effect to the following instruction, which uses the default settings.

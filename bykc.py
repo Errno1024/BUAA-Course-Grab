@@ -61,7 +61,7 @@ parser.add_argument('-R', '--retry', type=int, default=RETRY_LIMIT, metavar='lim
 parser.add_argument('--scan', default=None, type=int, metavar='span',
                     help=f'The span to scan forward for discovering hidden courses.')
 parser.add_argument('--default', action='store_true',
-                    help=f'The recommended default settings. This switch is synonymous with `-C -f -l -t '
+                    help=f'The recommended default settings. This switch is synonymous with `-C -l -t '
                          f'{DEFAULT_INTERVAL} -s {TRAVEL_TIME}`.')
 
 
@@ -70,7 +70,6 @@ def main():
 
     if args.default:
         setattr(args, 'continuous', getattr(args, 'continuous', 0) + 1)
-        setattr(args, 'forecast', True)
         setattr(args, 'list', True)
         if args.time is None:
             setattr(args, 'time', DEFAULT_INTERVAL)
