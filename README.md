@@ -10,6 +10,7 @@
 This tool set has following requirements.
 
 ```
+cryptography
 requests
 ```
 
